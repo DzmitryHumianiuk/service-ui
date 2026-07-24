@@ -40,7 +40,13 @@ import { messages } from '../messages';
 
 const cx = classNames.bind(styles);
 
-export const ExecutionSection = ({ modalState, setModalState, isBulkOperation, eventsInfo }) => {
+export const ExecutionSection = ({
+  modalState,
+  setModalState,
+  isBulkOperation,
+  eventsInfo,
+  benchMode,
+}) => {
   const { formatMessage } = useIntl();
   const { trackEvent } = useTracking();
   const dispatch = useDispatch();
@@ -87,6 +93,11 @@ export const ExecutionSection = ({ modalState, setModalState, isBulkOperation, e
       });
   }, []);
   useEffect(() => {
+    // benchMode drives bulk apply from the EXACT launch group (Bench owns the scope
+    // control), so the fuzzy logSearch "similar in launch" retrieval is not run here.
+    if (benchMode) {
+      return;
+    }
     if (optionValue === CURRENT_EXECUTION_ONLY) {
       setModalState({
         testItems: [],
@@ -168,21 +179,32 @@ export const ExecutionSection = ({ modalState, setModalState, isBulkOperation, e
 
   return (
     <>
-      <div className={cx('header')}>{formatMessage(messages.executionToChange)}</div>
-      {currentTestItems.map((item) => (
-        <TestItemDetails
-          item={item}
-          logs={item.logs}
-          showErrorLogs={currentItemsLoading || item.opened}
-          loading={currentItemsLoading}
-          key={item.id}
-          eventsInfo={{
-            onOpenStackTraceEvent,
-            onClickExternalLinkEvent,
-          }}
-        />
-      ))}
-      {!isBulkOperation && (
+      {/* In benchMode the Bench owns R1 ("This failure"), so the duplicate current-item
+          panel + "Execution to change" header are suppressed here. The two data fetches
+          above (current-item ERROR logs, scope items) still run so the Bench and the
+          scope control keep their live data. */}
+      {!benchMode && (
+        <>
+          <div className={cx('header')}>{formatMessage(messages.executionToChange)}</div>
+          {currentTestItems.map((item) => (
+            <TestItemDetails
+              item={item}
+              logs={item.logs}
+              showErrorLogs={currentItemsLoading || item.opened}
+              loading={currentItemsLoading}
+              key={item.id}
+              eventsInfo={{
+                onOpenStackTraceEvent,
+                onClickExternalLinkEvent,
+              }}
+            />
+          ))}
+        </>
+      )}
+      {/* benchMode: the Bench renders its own exact-group scope control, so the
+          stock fuzzy OptionsSection is suppressed (this component stays mounted only
+          for the current-item ERROR log fetch above). */}
+      {!isBulkOperation && !benchMode && (
         <OptionsSection
           currentTestItem={currentTestItems[0]}
           modalState={modalState}
@@ -199,10 +221,12 @@ ExecutionSection.propTypes = {
   setModalState: PropTypes.func,
   isBulkOperation: PropTypes.bool,
   eventsInfo: PropTypes.object,
+  benchMode: PropTypes.bool,
 };
 ExecutionSection.defaultProps = {
   modalState: {},
   setModalState: () => {},
   isBulkOperation: false,
   eventsInfo: {},
+  benchMode: false,
 };

@@ -26,6 +26,7 @@ import {
   MACHINE_LEARNING_SUGGESTIONS,
   SELECT_DEFECT_MANUALLY,
 } from '../constants';
+import { isRubricHypothesis } from '../analyzerSuggestionMeta';
 import { messages } from '../messages';
 import styles from './makeDecisionTabs.scss';
 
@@ -145,20 +146,28 @@ export const MakeDecisionTabs = ({
             )}
 
             {isAnalyzerAvailable &&
-              suggestedItems.map(({ suggestRs, testItemResource }, index) => (
-                <div
-                  key={testItemResource.id}
-                  onClick={() => selectMachineLearningSuggestionItem(index, testItemResource.id)}
-                  className={cx(`suggest-item`, {
-                    [`suggest-item-active`]:
-                      machineLearningTab.isOpen && selectedMLSuggest === index,
-                    jumping: index === 0 && suggestedItems.length && animationSuggest,
-                  })}
-                >
-                  <p className={cx('suggest-title')}>{suggestRs.matchScore}%</p>
-                  <p className={cx('suggest-text')}>{formatMessage(messages.analyzerSuggestion)}</p>
-                </div>
-              ))}
+              suggestedItems.map(({ suggestRs, testItemResource }, index) => {
+                const rubric = isRubricHypothesis(suggestRs);
+                return (
+                  <div
+                    key={testItemResource.id}
+                    onClick={() => selectMachineLearningSuggestionItem(index, testItemResource.id)}
+                    className={cx(`suggest-item`, {
+                      [`suggest-item-active`]:
+                        machineLearningTab.isOpen && selectedMLSuggest === index,
+                      'suggest-item-rubric': rubric,
+                      jumping: index === 0 && suggestedItems.length && animationSuggest,
+                    })}
+                  >
+                    <p className={cx('suggest-title')}>{suggestRs.matchScore}%</p>
+                    <p className={cx('suggest-text')}>
+                      {formatMessage(
+                        rubric ? messages.llmHypothesisTab : messages.analyzerSuggestion,
+                      )}
+                    </p>
+                  </div>
+                );
+              })}
           </div>
           {copyFromHistoryLineTab && (
             <div

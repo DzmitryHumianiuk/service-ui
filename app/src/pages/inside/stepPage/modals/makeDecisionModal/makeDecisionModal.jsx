@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useReducer, useState } from 'react';
+import React, { useEffect, useReducer, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames/bind';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideModalAction, withModal } from 'controllers/modal';
 import { useIntl } from 'react-intl';
@@ -23,7 +24,9 @@ import { useTracking } from 'react-tracking';
 import { NOTIFICATION_TYPES, showNotification } from 'controllers/notification';
 import { DarkModalLayout } from 'components/main/modal/darkModalLayout';
 import { GhostButton } from 'components/buttons/ghostButton';
+import { SpinningPreloader } from 'components/preloaders/spinningPreloader';
 import { activeProjectSelector } from 'controllers/user';
+import { getDefectTypeSelector } from 'controllers/project';
 import isEqual from 'fast-deep-equal';
 import { URLS } from 'common/urls';
 import { fetch, isEmptyObject } from 'common/utils';
@@ -54,12 +57,29 @@ import {
   SHOW_LOGS_BY_DEFAULT,
 } from './constants';
 import { ExecutionSection } from './executionSection';
+import { Bench } from './bench';
+import { isRubricHypothesis } from './analyzerSuggestionMeta';
+import styles from './makeDecisionModal.scss';
+
+const cx = classNames.bind(styles);
+
+// Middle truncation for the identity bar: long test names keep their head and
+// tail (both carry meaning); the full name always rides in the title attribute.
+const middleTruncate = (name, max = 76) => {
+  if (typeof name !== 'string' || name.length <= max) {
+    return name;
+  }
+  const head = Math.ceil(max * 0.6);
+  const tail = max - head;
+  return `${name.slice(0, head)}…${name.slice(name.length - tail)}`;
+};
 
 const MakeDecision = ({ data }) => {
   const { formatMessage } = useIntl();
   const { trackEvent } = useTracking();
   const dispatch = useDispatch();
   const activeProject = useSelector(activeProjectSelector);
+  const getDefectType = useSelector(getDefectTypeSelector);
   const historyItems = useSelector(historyItemsSelector);
   const isAnalyzerAvailable = !!useSelector(analyzerExtensionsSelector).length;
   const isBulkOperation = data.items && data.items.length > 1;
@@ -94,9 +114,31 @@ const MakeDecision = ({ data }) => {
   });
   const [activeTab, setActiveTab] = useState(SELECT_DEFECT_MANUALLY);
   const windowSize = useWindowResize();
+  const scopeRef = useRef(null);
+
+  // A decision that COULD become a Bench: single item + analyzer reachable. Known
+  // synchronously on the first render (selector + props), so we can hold back the
+  // stock UI until the suggest reply resolves and never flash the old tabs.
+  const benchEligible = isAnalyzerAvailable && isMLSuggestionsAvailable && !isBulkOperation;
 
   const [modalHasChanges, setModalHasChanges] = useState(false);
   const [loadingMLSuggest, setLoadingMLSuggest] = useState(false);
+  // Whether the ML suggest fetch has settled once. Until it does (for a Bench-
+  // eligible decision) we render the Bench shell with a loader, NOT the stock tabs,
+  // so the user never sees the old Make Decision flash before the Bench appears.
+  const [mlResolved, setMlResolved] = useState(false);
+
+  // The Bench replaces the stock execution/suggestions area when the analyzer
+  // actually spoke (non-empty suggest reply).
+  const benchActive = benchEligible && modalState.suggestedItems.length > 0;
+  // Bench-eligible but the reply has not settled yet: show the Bench shell + loader.
+  const benchPending = benchEligible && !mlResolved;
+  // Bench-eligible, reply settled, but EMPTY: the analyzer is reachable yet had
+  // nothing to say (e.g. a FAILED item with no ERROR logs, so no signature). We show
+  // the light Bench silent-no-signal empty state instead of the stock dark tabs, so
+  // the human still gets the light manual-triage surface. Analyzer-off / unreachable
+  // and bulk keep the stock dark tabs (benchEligible is false there).
+  const benchEmpty = benchEligible && mlResolved && modalState.suggestedItems.length === 0;
   useEffect(() => {
     let hasChanges;
     const newIssueData = modalState[ACTIVE_TAB_MAP[modalState.decisionType]].issue;
@@ -113,7 +155,19 @@ const MakeDecision = ({ data }) => {
     } else {
       hasChanges = !isEqual(itemData.issue, newIssueData);
     }
-    setModalHasChanges(hasChanges || !!modalState.issueActionType);
+    // A group-scope selection (C1 siblings or the two-tier override) is itself a
+    // change worth committing even when the current item's own issue is
+    // unchanged (verdict 6.4: the override pushes the armed decision out to the
+    // decided members). Without this, arming the same type the item already
+    // carries would leave Apply disabled and the group could never be swept. A
+    // real (non-TI) defect must be armed first, so merely ticking the box does
+    // not enable a To-Investigate no-op sweep.
+    const armedType = newIssueData && newIssueData.issueType;
+    const hasGroupScope =
+      !!(modalState.selectedItems && modalState.selectedItems.length > 0) &&
+      !!armedType &&
+      !armedType.startsWith(TO_INVESTIGATE_LOCATOR_PREFIX);
+    setModalHasChanges(hasChanges || hasGroupScope || !!modalState.issueActionType);
   }, [modalState]);
 
   useEffect(() => {
@@ -129,10 +183,14 @@ const MakeDecision = ({ data }) => {
             setModalState({ suggestedItems: resp });
           }
           setLoadingMLSuggest(false);
+          setMlResolved(true);
         })
         .catch(() => {
           setLoadingMLSuggest(false);
+          setMlResolved(true);
         });
+    } else {
+      setMlResolved(true);
     }
   }, []);
 
@@ -181,16 +239,30 @@ const MakeDecision = ({ data }) => {
       );
     }
 
-    return [...currentTestItems, ...selectedItems].map((item) => ({
-      ...(isIssueAction ? { ...item, opened: SHOW_LOGS_BY_DEFAULT } : {}),
-      id: item.id || item.itemId,
-      testItemId: item.id || item.itemId,
-      issue: {
+    return [...currentTestItems, ...selectedItems].map((item) => {
+      const merged = {
         ...item.issue,
         ...newIssue,
         autoAnalyzed: false,
-      },
-    }));
+      };
+      // Group-override members (verdict 9.2): keep KB provenance honest by
+      // appending a short trailing note to the outgoing comment so a later reader
+      // can tell a fanned-out decision from an individually triaged one. The full
+      // armed comment (not the manual delta) is used so the note never lands
+      // alone when the armed comment matched the current item's base.
+      if (item.overrideFrom) {
+        const armedComment = (issue.comment || '').trim();
+        const note = `applied via group override from item ${item.overrideFrom}`;
+        merged.comment = armedComment ? `${armedComment}\n${note}` : note;
+        merged.issueType = issue.issueType || item.issue.issueType;
+      }
+      return {
+        ...(isIssueAction ? { ...item, opened: SHOW_LOGS_BY_DEFAULT } : {}),
+        id: item.id || item.itemId,
+        testItemId: item.id || item.itemId,
+        issue: merged,
+      };
+    });
   };
   const sendSuggestResponse = () => {
     const dataToSend = modalState.suggestedItems.map((item) => {
@@ -357,7 +429,8 @@ const MakeDecision = ({ data }) => {
         saveDefect();
     } else {
       modalHasChanges &&
-        !isEqual(itemData.issue, modalState[ACTIVE_TAB_MAP[activeTab]].issue) &&
+        (!isEqual(itemData.issue, modalState[ACTIVE_TAB_MAP[activeTab]].issue) ||
+          (modalState.selectedItems && modalState.selectedItems.length > 0)) &&
         saveDefect();
     }
     trackEvent(getOnApplyEvent());
@@ -388,6 +461,22 @@ const MakeDecision = ({ data }) => {
       </GhostButton>
     ),
   });
+
+  // Accept a cold-start rubric hypothesis: route into the standard "select defect
+  // manually" flow with the rubric's proposed defect type and the rationale prefilled
+  // into the editable comment editor, so the user can review/edit before Apply. This
+  // fixes the stock behaviour where a self-referenced rubric row would copy the item's
+  // own (empty) issue and apply nothing.
+  const acceptSuggestedHypothesis = ({ issueType, comment }) => {
+    setModalState({
+      decisionType: SELECT_DEFECT_MANUALLY,
+      issueActionType: '',
+      selectManualChoice: {
+        issue: { ...itemData.issue, issueType, comment: comment || '' },
+      },
+    });
+    setActiveTab(SELECT_DEFECT_MANUALLY);
+  };
 
   const getMakeDecisionTabs = () => {
     const preparedHistoryLineItems = historyItems.filter(
@@ -420,14 +509,20 @@ const MakeDecision = ({ data }) => {
         isOpen: activeTab === MACHINE_LEARNING_SUGGESTIONS,
         title:
           modalState.suggestChoice.suggestRs &&
-          formatMessage(messages.machineLearningSuggestions, {
-            value: modalState.suggestChoice.suggestRs.matchScore,
-          }),
+          formatMessage(
+            isRubricHypothesis(modalState.suggestChoice.suggestRs)
+              ? messages.llmHypothesisHeader
+              : messages.machineLearningSuggestions,
+            {
+              value: modalState.suggestChoice.suggestRs.matchScore,
+            },
+          ),
         content: isMLSuggestionsAvailable && (
           <MachineLearningSuggestions
             modalState={modalState}
             itemData={itemData}
             eventsInfo={data.eventsInfo.editDefectsEvents}
+            onAcceptHypothesis={acceptSuggestedHypothesis}
           />
         ),
       },
@@ -458,43 +553,97 @@ const MakeDecision = ({ data }) => {
     ctrlEnter: applyChanges,
   };
 
+  const executionSection = (bench) => (
+    <ExecutionSection
+      modalState={modalState}
+      setModalState={setModalState}
+      isBulkOperation={isBulkOperation}
+      eventsInfo={data.eventsInfo.editDefectsEvents}
+      benchMode={bench}
+    />
+  );
+
+  // Bench-mode dark header: the identity bar. Real item name, real status and
+  // the SAVED issue type from RP entities. The stock branch keeps the plain
+  // "Select defect" string.
+  const getBenchHeaderTitle = () => {
+    const item = modalState.currentTestItems[0] || itemData;
+    const savedType = item.issue?.issueType ? getDefectType(item.issue.issueType) : null;
+    return (
+      <div className={cx('bench-identity')}>
+        <span className={cx('bi-cap')}>{formatMessage(messages.benchIdentityCap)}</span>
+        <span className={cx('bi-name')} title={item.name}>
+          {middleTruncate(item.name)}
+        </span>
+        {item.status && <span className={cx('bi-status')}>{item.status}</span>}
+        {savedType && (
+          <span className={cx('bi-issue')}>
+            <span className={cx('bi-dot')} style={{ background: savedType.color }} />
+            {savedType.longName}
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  const benchChrome = benchActive || benchPending || benchEmpty;
   return (
     <DarkModalLayout
-      headerTitle={formatMessage(messages.selectDefect)}
+      headerTitle={benchChrome ? getBenchHeaderTitle() : formatMessage(messages.selectDefect)}
       modalHasChanges={modalHasChanges}
       hotKeyAction={hotKeyAction}
       modalNote={formatMessage(messages.modalNote)}
-      sideSection={
-        <ExecutionSection
-          modalState={modalState}
-          setModalState={setModalState}
-          isBulkOperation={isBulkOperation}
-          eventsInfo={data.eventsInfo.editDefectsEvents}
-        />
-      }
+      sideSection={benchChrome ? null : executionSection(false)}
       footer={
-        <MakeDecisionFooter
-          buttons={getFooterButtons()}
-          modalState={modalState}
-          isBulkOperation={isBulkOperation}
-          setModalState={setModalState}
-          modalHasChanges={modalHasChanges}
-          eventsInfo={data.eventsInfo.editDefectsEvents}
-        />
+        benchChrome ? null : (
+          <MakeDecisionFooter
+            buttons={getFooterButtons()}
+            modalState={modalState}
+            isBulkOperation={isBulkOperation}
+            setModalState={setModalState}
+            modalHasChanges={modalHasChanges}
+            eventsInfo={data.eventsInfo.editDefectsEvents}
+          />
+        )
       }
     >
-      <MakeDecisionTabs
-        tabs={getMakeDecisionTabs(windowSize)}
-        toggleTab={setActiveTab}
-        suggestedItems={modalState.suggestedItems}
-        loadingMLSuggest={loadingMLSuggest}
-        modalState={modalState}
-        setModalState={setModalState}
-        itemData={itemData}
-        isBulkOperation={isBulkOperation}
-        isAnalyzerAvailable={isAnalyzerAvailable}
-        isMLSuggestionsAvailable={isMLSuggestionsAvailable}
-      />
+      {benchPending ? (
+        <div className={cx('bench-pending')}>
+          <SpinningPreloader />
+        </div>
+      ) : benchActive || benchEmpty ? (
+        <Bench
+          suggestedItems={modalState.suggestedItems}
+          currentItem={modalState.currentTestItems[0]}
+          emptyNoSignal={benchEmpty}
+          modalState={modalState}
+          setModalState={setModalState}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onApply={applyChanges}
+          onCancel={() => dispatch(hideModalAction())}
+          modalHasChanges={modalHasChanges}
+          onAdoptRubric={acceptSuggestedHypothesis}
+          scopeSection={executionSection(true)}
+          scopeRef={scopeRef}
+          scopeValue={modalState.optionValue}
+          isBulkOperation={isBulkOperation}
+          eventsInfo={data.eventsInfo.editDefectsEvents}
+        />
+      ) : (
+        <MakeDecisionTabs
+          tabs={getMakeDecisionTabs(windowSize)}
+          toggleTab={setActiveTab}
+          suggestedItems={modalState.suggestedItems}
+          loadingMLSuggest={loadingMLSuggest}
+          modalState={modalState}
+          setModalState={setModalState}
+          itemData={itemData}
+          isBulkOperation={isBulkOperation}
+          isAnalyzerAvailable={isAnalyzerAvailable}
+          isMLSuggestionsAvailable={isMLSuggestionsAvailable}
+        />
+      )}
     </DarkModalLayout>
   );
 };

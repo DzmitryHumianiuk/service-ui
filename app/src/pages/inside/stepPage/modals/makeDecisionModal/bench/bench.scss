@@ -1,0 +1,2047 @@
+/*
+ * Copyright 2025 EPAM Systems
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * The Bench — RP Design System 6 (light) re-skin of the Make Decision modal.
+ * Tokens + values are quoted from docs/consilium-make-decision/mockup-bench-rp.html.
+ * Everything is scoped under .bench-modal so the light surface never leaks into the
+ * surrounding dark modal chrome.
+ */
+
+.bench-modal {
+  // RP Design System 6 tokens (mockup :root)
+  --rp-bg-000: #ffffff;
+  --rp-bg-100: #f7f7f8;
+  --rp-bg-200: #eceff4;
+  --rp-topaz-100: #e5f5f8;
+  --rp-topaz: #00829b;
+  --rp-topaz-hover: #009dbb;
+  --rp-topaz-focused: #00b0d1;
+  --rp-topaz-pressed: #00758c;
+  --rp-almost-black: #3f3f3f;
+  --rp-charcoal: #464547;
+  --rp-e-100: #e3e7ec;
+  --rp-e-200: #c1c7d0;
+  --rp-e-300: #a2aab5;
+  --rp-e-400: #8d95a1;
+  --rp-error: #dc5959;
+  --rp-a-red-700: #c33c3d;
+  --rp-yellow-800: #ffc208;
+  --rp-yellow-700: #d4a002;
+  --rp-sm-warning: #d78706;
+  --rp-sm-warning-line-100: #fceecb;
+  --rp-sm-warning-line-200: #fbe7b6;
+  --rp-status-passed: #3aa76d;
+  --rp-a-green-800: #1c8b50;
+  --rp-shadow-rgb: 55, 67, 98;
+  --rp-shadow: 0 1px 3px rgba(var(--rp-shadow-rgb), 0.1);
+  --rp-shadow-hover: 0 1px 3px rgba(var(--rp-shadow-rgb), 0.2);
+  --rp-shadow-secondary: 0 8px 40px rgba(0, 0, 0, 0.15);
+  --rp-font: Roboto, Arial, Helvetica, sans-serif;
+  --rp-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --muted3: #8d95a1;
+
+  min-width: 1080px;
+  max-width: 1240px;
+  margin: 0 auto 10px auto;
+  background: var(--rp-bg-000);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--rp-shadow-secondary);
+  border: 1px solid var(--rp-e-100);
+  font-family: var(--rp-font);
+  color: var(--rp-almost-black);
+  font-size: 13px;
+  line-height: 20px;
+
+  a {
+    color: var(--rp-topaz);
+  }
+
+  // ---- shared bits -------------------------------------------------------
+  .insp-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--rp-topaz);
+    text-decoration: none;
+    font-size: 12px;
+    white-space: nowrap;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    // RP open-in-new-tab icon: inherit the link color, sit on the text baseline.
+    .insp-ico {
+      display: inline-flex;
+      align-items: center;
+
+      svg {
+        width: 13px;
+        height: 13px;
+
+        path {
+          fill: currentColor;
+        }
+      }
+    }
+
+    // Pinned to the card's top right corner (the .check card is position: relative).
+    &.corner {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+    }
+  }
+
+  .tip {
+    border-bottom: 1px dotted var(--rp-e-300);
+    cursor: help;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .kbd {
+    display: inline-block;
+    font-family: var(--rp-mono);
+    font-size: 11px;
+    line-height: 16px;
+    padding: 0 5px;
+    background: var(--rp-bg-200);
+    border: 1px solid var(--rp-e-200);
+    border-radius: 3px;
+    color: var(--rp-charcoal);
+  }
+
+  // ---- buttons (§5.1) ----------------------------------------------------
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 3px;
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 500;
+    font-family: var(--rp-font);
+    padding: 7px 14px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .btn-sm {
+    padding: 5px 11px;
+    font-size: 12px;
+  }
+  .btn-teal {
+    background: var(--rp-topaz);
+    color: #fff;
+    border-color: var(--rp-topaz);
+
+    &:hover {
+      background: var(--rp-topaz-hover);
+      border-color: var(--rp-topaz-hover);
+    }
+    &:active {
+      background: var(--rp-topaz-pressed);
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--rp-topaz);
+    color: var(--rp-topaz);
+
+    &:hover {
+      background: var(--rp-topaz-100);
+    }
+  }
+
+  // ---- bands -------------------------------------------------------------
+  .band {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--rp-e-100);
+  }
+  .band-white {
+    background: var(--rp-bg-000);
+  }
+  .band-grey {
+    background: var(--rp-bg-100);
+  }
+
+  // ---- log toggle (lives at the failure band's right edge) ----------------
+  .logtoggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    color: var(--rp-topaz);
+    font-size: 13px;
+    user-select: none;
+    white-space: nowrap;
+
+    .chev {
+      display: inline-block;
+      transition: transform 0.15s;
+      font-size: 10px;
+    }
+    &.open .chev {
+      transform: rotate(90deg);
+    }
+  }
+
+  // ---- R1 "This failure" -------------------------------------------------
+  // silent-no-signal empty state: a calm neutral hero (NOT error-red, NOT burst-amber).
+  .silent-hero {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 28px 24px;
+
+    .sh-bar {
+      width: 4px;
+      border-radius: 2px;
+      background: var(--rp-e-300);
+      align-self: stretch;
+      flex: none;
+    }
+    .sh-glyph {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--rp-bg-200);
+      color: var(--rp-e-400);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+    }
+    .sh-main {
+      max-width: 640px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sh-cap {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--rp-e-400);
+    }
+    .sh-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 17px;
+      line-height: 24px;
+      font-weight: 600;
+      color: var(--rp-almost-black);
+
+      .sh-info {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 1px solid var(--rp-e-300);
+        font-size: 10px;
+        color: var(--rp-e-400);
+        cursor: help;
+      }
+    }
+    .sh-body {
+      font-size: 13px;
+      line-height: 20px;
+      color: var(--rp-charcoal);
+    }
+    .sh-next {
+      font-size: 13px;
+      line-height: 20px;
+      font-weight: 500;
+      color: var(--rp-almost-black);
+    }
+    .sh-note {
+      font-size: 12px;
+      line-height: 18px;
+      color: var(--rp-e-400);
+    }
+  }
+
+  .failure-panel {
+    padding: 12px 24px;
+
+    .fp-line {
+      display: flex;
+      gap: 12px;
+    }
+    .fp-bar {
+      width: 4px;
+      border-radius: 2px;
+      background: var(--rp-error);
+      flex: none;
+    }
+    .fp-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .fp-cap {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--rp-e-400);
+      margin-bottom: 3px;
+    }
+    .fp-top {
+      font-family: var(--rp-mono);
+      font-size: 12.5px;
+      color: var(--rp-almost-black);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .fp-sub {
+      font-family: var(--rp-mono);
+      font-size: 11.5px;
+      color: var(--rp-e-400);
+      margin-top: 2px;
+      word-break: break-word;
+    }
+    .fp-solo {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--rp-e-400);
+      font-style: italic;
+    }
+    .fp-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: none;
+      padding-top: 2px;
+    }
+    .fulllog {
+      margin: 12px 0 0 16px;
+      background: var(--rp-bg-000);
+      border: 1px solid var(--rp-e-100);
+      border-radius: 8px;
+      padding: 10px 12px;
+      max-height: 230px;
+      overflow: auto;
+      box-shadow: var(--rp-shadow);
+
+      .lg-cap {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        color: var(--rp-e-400);
+        margin-bottom: 6px;
+      }
+      .logrow {
+        font-family: var(--rp-mono);
+        font-size: 12px;
+        line-height: 18px;
+        color: var(--rp-charcoal);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .logrow.star {
+        color: var(--rp-yellow-700);
+        font-weight: 700;
+      }
+    }
+  }
+
+  // quote-click pulse on a log line (same spirit as the scope pulse)
+  .pulse-line {
+    animation: benchLinePulse 1.5s ease-out;
+    border-radius: 2px;
+  }
+
+  // ---- group of identical failures --------------------------------------
+  .group-band {
+    padding: 14px 24px;
+
+    .group-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .group-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      height: 26px;
+      padding: 0 8px;
+      background: var(--rp-topaz-100);
+      color: var(--rp-topaz);
+      border: 1px solid #bfe6ee;
+      border-radius: 13px;
+      font-size: 15px;
+      font-weight: 700;
+      flex: none;
+    }
+    .group-main {
+      flex: 1;
+    }
+    .group-head {
+      font-size: 13px;
+      color: var(--rp-almost-black);
+
+      b {
+        font-weight: 700;
+      }
+    }
+    .group-fraction {
+      margin-top: 3px;
+      font-size: 12.5px;
+      color: var(--rp-charcoal);
+      max-width: 860px;
+    }
+    .group-honesty {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--rp-e-400);
+      font-style: italic;
+    }
+    .group-actions {
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      align-self: stretch;
+      gap: 8px;
+    }
+
+    // The C2 one-gesture action: a normal button whose object is a defect badge
+    // ("Apply" is plain button text, "System Issue" is the mini defect pill).
+    .burst-apply-btn {
+      background: var(--rp-bg-000);
+      gap: 6px;
+    }
+
+    .group-rule {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--rp-almost-black);
+    }
+    // C2 BURST: scale tint (amber family), never a defect color
+    &.burst {
+      border-left: 4px solid var(--rp-yellow-800);
+      background: var(--rp-sm-warning-line-100);
+      border-bottom-color: var(--rp-sm-warning-line-200);
+
+      .group-badge {
+        background: var(--rp-sm-warning-line-200);
+        color: #8a6a12;
+        border-color: #f0d693;
+      }
+    }
+    .group-pointer {
+      margin: 8px 0 0 42px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: var(--rp-topaz);
+      font-size: 12px;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+    .group-members {
+      margin: 10px 0 0 42px;
+
+      .gm-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        max-height: 180px;
+        overflow: auto;
+      }
+      .gm-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        background: var(--rp-bg-100);
+        border: 1px solid var(--rp-e-100);
+        border-radius: 100px;
+        font-size: 12px;
+        color: var(--rp-charcoal);
+        text-decoration: none;
+
+        .gm-cur {
+          color: var(--rp-topaz);
+          font-weight: 600;
+        }
+      }
+      a.gm-chip:hover {
+        border-color: var(--rp-topaz);
+        color: var(--rp-topaz);
+      }
+      .gm-showing {
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--rp-e-400);
+      }
+    }
+  }
+
+  // ---- decision story band (Act 1) --------------------------------------
+  // Always shown when a decision record exists; renders after the group band and
+  // before the offers region. Recipe copied verbatim from mockup-mdm-states.html
+  // (.story .. .ai-more), with the mockup's --rp-fw-* tokens resolved to the
+  // literal weights this file already uses. Own background + border-bottom so the
+  // band stands on its own.
+  .story {
+    background: var(--rp-bg-000);
+    border-bottom: 1px solid var(--rp-e-100);
+    padding: 14px 24px 16px;
+    min-height: 104px;
+
+    .story-caprow {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 7px;
+      flex-wrap: wrap;
+    }
+    .story-cap {
+      font-size: 11px;
+      line-height: 16px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--rp-e-400);
+    }
+    // Right cluster of the story caprow: the Inspector link then the provenance tag.
+    .story-caprow-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex: none;
+    }
+    // Inline defect pill and item link inside the story headline / AI paragraph.
+    .story-head .defect-pill.mini {
+      transform: translateY(2px);
+    }
+    .ai-body {
+      .rich-item {
+        color: var(--rp-topaz);
+        white-space: nowrap;
+      }
+      .rich-pill {
+        display: inline-flex;
+        vertical-align: baseline;
+
+        .defect-pill.mini {
+          transform: translateY(2px);
+        }
+      }
+    }
+    // Provenance tag, reused by both the story caprow and the AI caprow.
+    .src-tag {
+      font-size: 10.5px;
+      color: var(--rp-e-400);
+      border: 1px solid var(--rp-e-200);
+      border-radius: 100px;
+      padding: 1px 8px;
+      white-space: nowrap;
+      font-style: normal;
+    }
+    .story-head {
+      font-size: 16px;
+      line-height: 23px;
+      font-weight: 600;
+      color: var(--rp-almost-black);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .story-time {
+      font-size: 12px;
+      color: var(--rp-e-400);
+      font-weight: 400;
+      white-space: nowrap;
+    }
+    .story-reason {
+      font-size: 13px;
+      line-height: 20px;
+      color: var(--rp-charcoal);
+      margin-top: 4px;
+      max-width: 860px;
+    }
+    // Muted bridge line (abstain-with-offers states).
+    .story-bridge {
+      font-size: 12.5px;
+      line-height: 19px;
+      color: var(--rp-e-400);
+      margin-top: 6px;
+      max-width: 860px;
+      padding-left: 10px;
+      border-left: 2px solid var(--rp-e-100);
+    }
+    // The AI paragraph, gated by isDecisionFresh; topaz rail + grey fill.
+    .story-ai {
+      margin-top: 11px;
+      border-left: 3px solid var(--rp-topaz);
+      background: var(--rp-bg-100);
+      border-radius: 0 8px 8px 0;
+      padding: 9px 13px;
+      max-width: 860px;
+
+      .ai-caprow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 4px;
+      }
+      .ai-cap {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--rp-e-400);
+      }
+      // .open (set by Show more) unclamps the body.
+      &.open .ai-body {
+        display: block;
+        -webkit-line-clamp: unset;
+      }
+    }
+    .ai-body {
+      font-size: 12.5px;
+      line-height: 19px;
+      color: var(--rp-charcoal);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ai-more {
+      background: none;
+      border: none;
+      color: var(--rp-topaz);
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+      padding: 2px 0 0;
+      font-family: inherit;
+
+      &:hover {
+        color: var(--rp-topaz-hover);
+      }
+    }
+  }
+
+  // ---- agreement banner + bench -----------------------------------------
+  .bench-region {
+    padding: 16px 24px;
+  }
+  .region-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--rp-e-100);
+    background: var(--rp-bg-100);
+    margin-bottom: 12px;
+
+    &.unsure {
+      background: var(--rp-sm-warning-line-100);
+      border-color: var(--rp-sm-warning-line-200);
+
+      .headline-help {
+        color: #8a6a12;
+      }
+    }
+    &.agree {
+      background: var(--rp-topaz-100);
+      border-color: #bfe6ee;
+    }
+    .headline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--rp-almost-black);
+
+      .verd {
+        color: var(--rp-topaz-pressed);
+      }
+
+      // The agreed defect renders as the real defect-type label, not text.
+      .verd-pill-slot {
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+    // The Enter hint hugs the banner's right edge (mockup parity).
+    .headline-help {
+      font-size: 12.5px;
+      color: var(--rp-e-400);
+      margin-left: auto;
+      text-align: right;
+      white-space: nowrap;
+
+      .kbd {
+        margin: 0 2px;
+      }
+    }
+  }
+  .region-cap {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--rp-e-400);
+    margin-bottom: 10px;
+  }
+  // Offers region head ("What the analyzer offers now"). Copied from the mockup's
+  // .region-cap recipe for the offers band; named hook for the offers section so
+  // the hub agent can label it without overloading the shared .region-cap.
+  .offers-cap {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--rp-e-400);
+    margin: 0 0 9px;
+  }
+  .bench-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  // ---- advisor check cards ----------------------------------------------
+  .check {
+    // Narrower basis so three cards + the vertical divider + the dock column all
+    // sit on ONE row (mockup-bench.html), never wrapping the dock to a second row.
+    flex: 1 1 190px;
+    min-width: 180px;
+    max-width: 320px;
+    background: var(--rp-bg-000);
+    border: 1px solid var(--rp-e-200);
+    border-radius: 8px;
+    padding: 12px 13px 12px 15px;
+    position: relative;
+    box-shadow: var(--rp-shadow);
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+
+    // Mockup parity (mockup-mdm-states .check:hover): the WHOLE card is the arm
+    // target, so an actionable card shows a pointer and lifts on hover to invite
+    // the click. Empty cards stay inert.
+    &.actionable {
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--rp-e-300);
+        box-shadow: var(--rp-shadow-hover, 0 1px 3px rgba(9, 30, 66, 0.2));
+      }
+      &:focus-visible {
+        outline: none;
+        border-color: var(--rp-topaz);
+        box-shadow: 0 0 0 2px var(--rp-topaz-focused);
+      }
+    }
+    &.empty {
+      cursor: default;
+    }
+
+    // Mockup parity: the compare-source card carries a topaz focus ring while
+    // its compare view is open (mockup-bench-rp.html .check.focus).
+    &.focus {
+      border-color: var(--rp-topaz);
+      box-shadow: 0 0 0 1px var(--rp-topaz-focused) inset;
+    }
+
+    // Stage 2 (verdict 6.1): the armed card keeps a persistent topaz ring so the
+    // human can always see which advisor is loaded into the verdict. Stronger
+    // than the compare focus ring and the hover lift, listed after both so armed
+    // wins (mockup-mdm-states .ms.armed .check.lead).
+    &.armed,
+    &.armed.focus,
+    &.actionable.armed:hover {
+      border-color: var(--rp-topaz);
+      box-shadow: 0 0 0 2px var(--rp-topaz-focused), var(--rp-shadow);
+    }
+
+    // The "leading" chip in the method header (mockup .lean-chip): marks the card
+    // a bare Enter arms first.
+    .lean-chip {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 6px;
+      padding: 1px 8px;
+      border: 1px solid var(--rp-topaz);
+      border-radius: 100px;
+      background: var(--rp-topaz-100);
+      color: var(--rp-topaz-pressed);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      cursor: help;
+    }
+    // The armed note at the card foot (mockup .armed-note).
+    .armed-note {
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--rp-topaz-pressed);
+    }
+
+    .edge {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 8px 0 0 8px;
+    }
+    &.auto .edge {
+      background: var(--rp-status-passed);
+    }
+    &.suggest .edge {
+      background: linear-gradient(var(--rp-yellow-700) 50%, var(--rp-e-200) 50%);
+    }
+    &.abstain .edge {
+      background: var(--rp-e-300);
+    }
+    &.rubric {
+      border-style: dashed;
+      border-color: var(--rp-e-300);
+
+      .edge {
+        background: repeating-linear-gradient(
+          180deg,
+          var(--rp-e-300) 0 4px,
+          transparent 4px 8px
+        );
+      }
+    }
+    &.empty {
+      opacity: 0.75;
+      border-style: dashed;
+      box-shadow: none;
+      background: var(--rp-bg-100);
+    }
+
+    .why {
+      position: absolute;
+      top: 10px;
+      right: 11px;
+    }
+    .method {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--rp-almost-black);
+
+      .gl {
+        color: var(--rp-e-400);
+      }
+    }
+    .tag-nc {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 0 6px;
+      border: 1px solid var(--rp-e-200);
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--rp-e-400);
+      vertical-align: middle;
+    }
+    .role {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--rp-e-400);
+    }
+    .verd-pill {
+      margin-top: 9px;
+    }
+    .strength {
+      margin-top: 9px;
+      font-size: 12.5px;
+      color: var(--rp-almost-black);
+
+      b {
+        font-weight: 700;
+      }
+    }
+    // "In launch #N" line, directly under the defect pill (Past decision card).
+    .past-run {
+      margin-top: 6px;
+      font-size: 12.5px;
+      color: var(--rp-almost-black);
+    }
+    .prov {
+      margin-top: 5px;
+      font-size: 12px;
+      color: var(--rp-e-400);
+
+      .prov-note {
+        font-style: italic;
+      }
+    }
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .same-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--rp-a-green-800);
+    }
+  }
+
+  // ---- defect pill (§5.3) ------------------------------------------------
+  .defect-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--rp-bg-000);
+    color: var(--rp-almost-black);
+    border: 1px solid var(--rp-e-200);
+    border-radius: 100px;
+    padding: 2px 9px 2px 7px;
+    font-size: 13px;
+    font-weight: 600;
+
+    .dot {
+      width: 12px;
+      height: 12px;
+    }
+
+    // Inline variant (miniPill): the same RP defect label sitting on a text line,
+    // one notch tighter so it does not tower over the surrounding sentence.
+    &.mini {
+      vertical-align: text-bottom;
+      padding: 1px 8px 1px 6px;
+      font-size: 12px;
+    }
+  }
+
+  // ---- the line (horizontal) + declined dock (full-width strip) ----------
+  // Vertical divider column between the advisor cards and the declined dock
+  // (mockup-bench.html). The rotated label sits ON TOP of the dotted rule (a
+  // white chip breaks the dots behind it) so the divider takes only the label's
+  // width, never an extra rule+gap column.
+  .bar-sep {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    margin: 0 2px;
+
+    .bar-rule {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 2px dotted var(--rp-e-300);
+      transform: translateX(-50%);
+    }
+    .bar-lbl {
+      position: relative;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 6px 0;
+      background: var(--rp-bg-000);
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--rp-e-400);
+      white-space: nowrap;
+      cursor: help;
+    }
+  }
+  // Declined dock as the 4th column, aligned to the top of the row.
+  .dock {
+    flex: 1 1 240px;
+    min-width: 236px;
+    max-width: 340px;
+    align-self: flex-start;
+    border: 1px dashed var(--rp-e-300);
+    border-radius: 8px;
+    padding: 11px 13px;
+    background: var(--rp-bg-200);
+
+    .dock-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .dock-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--rp-charcoal);
+      user-select: none;
+
+      .chev {
+        font-size: 9px;
+        transition: transform 0.15s;
+      }
+      &:not(.open) .chev {
+        transform: rotate(-90deg);
+      }
+    }
+    .dock-note {
+      margin: 8px 0 10px;
+      font-size: 11.5px;
+      color: var(--rp-e-400);
+    }
+    // Stacked card (mockup-bench.html image 23): name / struck defect + score /
+    // actions, each on its own line inside the narrow dock column.
+    .dock-item {
+      border: 1px dashed var(--rp-e-200);
+      border-radius: 6px;
+      padding: 9px 11px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+
+      &:hover {
+        border-color: var(--rp-e-300);
+      }
+      &.focus {
+        border-color: var(--rp-e-400);
+        background: var(--rp-bg-000);
+      }
+      .dn {
+        font-size: 12.5px;
+        color: var(--rp-charcoal);
+        font-weight: 600;
+        // A very long / unbroken test name must not overflow the narrow dock
+        // column: break long tokens, clamp to two lines with an ellipsis, and
+        // expose the full name via the title tooltip on hover.
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .dd {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--rp-e-400);
+
+        .strike {
+          text-decoration: line-through;
+          text-decoration-color: var(--rp-e-300);
+          color: var(--rp-e-400);
+        }
+      }
+      .dact {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 9px;
+
+        .dock-adopt {
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          color: var(--rp-topaz);
+          font-size: 12px;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+  }
+
+  // ---- the stage band: AI decision summary (or the compare view) ----------
+  .stage {
+    padding: 16px 24px;
+  }
+
+  .linklike {
+    display: inline-block;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--rp-topaz);
+    font-size: 12px;
+    font-family: var(--rp-font);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .ai-sum {
+    .ai-sum-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+
+      .spark {
+        color: var(--rp-topaz);
+        font-size: 13px;
+      }
+      .ai-sum-cap {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        color: var(--rp-topaz-pressed);
+      }
+      .ai-sum-tag {
+        padding: 0 6px;
+        border: 1px solid var(--rp-e-200);
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--rp-e-400);
+      }
+    }
+    .ai-sum-subcap {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      color: var(--rp-sm-warning);
+      margin-bottom: 5px;
+    }
+    .ai-sum-body {
+      min-height: 38px;
+      max-width: 960px;
+      font-size: 12.5px;
+      line-height: 19px;
+      color: var(--rp-charcoal);
+      white-space: pre-wrap;
+      word-break: break-word;
+
+      &.clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        white-space: normal;
+      }
+      // Inline "item N" link inside the summary text.
+      .sum-itemlink {
+        color: var(--rp-topaz);
+        text-decoration: none;
+        white-space: nowrap;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+      // Keep the inline defect badge from stretching the line height.
+      .defect-pill.mini {
+        vertical-align: text-bottom;
+      }
+    }
+    .ai-sum-incomment {
+      font-size: 12.5px;
+      color: var(--rp-e-400);
+      font-style: italic;
+    }
+    .ai-sum-quotes {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .quote {
+        display: block;
+        text-align: left;
+        max-width: 960px;
+        border: none;
+        border-left: 3px solid var(--rp-e-200);
+        background: var(--rp-bg-000);
+        border-radius: 0 4px 4px 0;
+        padding: 4px 10px;
+        font-family: var(--rp-mono);
+        font-size: 12px;
+        line-height: 18px;
+        color: var(--rp-charcoal);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &.linked {
+          border-left-color: var(--rp-topaz);
+          cursor: pointer;
+
+          &:hover {
+            background: var(--rp-topaz-100);
+          }
+        }
+        &.gone {
+          color: var(--rp-e-400);
+        }
+        .quote-tag {
+          margin-left: 8px;
+          font-family: var(--rp-font);
+          font-size: 10px;
+          color: var(--rp-e-400);
+          font-style: italic;
+        }
+      }
+    }
+    .ai-sum-rubric {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--rp-e-200);
+    }
+    .ai-sum-instruction {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--rp-e-400);
+      max-width: 760px;
+    }
+    .ai-sum-foot {
+      margin-top: 10px;
+    }
+    .review-note {
+      margin-top: 8px;
+      font-size: 12px;
+      font-style: italic;
+      color: var(--rp-sm-warning);
+    }
+  }
+
+  // ---- log compare (R2) --------------------------------------------------
+  .compare {
+    .cmp-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+
+      .cmp-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--rp-almost-black);
+      }
+    }
+    .cmp-help {
+      font-size: 12px;
+      color: var(--rp-e-400);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+
+      .cmp-legend {
+        display: flex;
+        gap: 12px;
+      }
+      .lg {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .sw {
+        width: 22px;
+        height: 12px;
+        border-radius: 3px;
+        display: inline-block;
+      }
+      .lg-same {
+        background: rgba(58, 167, 109, 0.14);
+        border: 1px solid rgba(58, 167, 109, 0.5);
+      }
+      .lg-diff {
+        background: rgba(255, 194, 8, 0.18);
+        border: 1px solid var(--rp-yellow-700);
+      }
+    }
+    .cmp-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+
+      @media (max-width: 980px) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .cmp-col {
+      background: var(--rp-bg-000);
+      border: 1px solid var(--rp-e-100);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: var(--rp-shadow);
+      max-height: 260px;
+      overflow: auto;
+
+      .cmp-col-head {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--rp-almost-black);
+        margin-bottom: 2px;
+
+        .s {
+          display: block;
+          font-weight: 400;
+          font-size: 11px;
+          color: var(--rp-e-400);
+          margin-top: 2px;
+        }
+      }
+      .cmp-body {
+        margin-top: 8px;
+      }
+    }
+    .cmp-line {
+      font-family: var(--rp-mono);
+      font-size: 12px;
+      line-height: 18px;
+      padding: 1px 4px;
+      border-radius: 2px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      position: relative;
+
+      &.same {
+        color: #2f6f4c;
+        background: rgba(58, 167, 109, 0.12);
+      }
+      &.diff {
+        color: #7a5b00;
+        background: rgba(255, 194, 8, 0.16);
+      }
+      .starwrap {
+        color: var(--rp-yellow-700);
+        font-weight: 700;
+        margin-right: 4px;
+      }
+      .sidetag {
+        margin-left: 8px;
+        font-family: var(--rp-font);
+        font-size: 10px;
+        color: var(--rp-yellow-700);
+        opacity: 0.85;
+      }
+    }
+    .cmp-nolog {
+      font-size: 12px;
+      color: var(--rp-e-400);
+      font-style: italic;
+    }
+    .cmp-verdict {
+      margin-top: 12px;
+
+      .cv-line {
+        font-size: 12.5px;
+        line-height: 19px;
+        color: var(--rp-charcoal);
+        background: var(--rp-bg-000);
+        border: 1px solid var(--rp-e-100);
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+    }
+    .cmp-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+
+      .cmp-foot-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12.5px;
+        color: var(--rp-e-400);
+      }
+    }
+  }
+
+  // ---- verdict bar: the single commit bar ---------------------------------
+  // C2 burst apply: everything below the context band is covered while the
+  // focused panel is open (dimmed, inert; Esc or Back restores it).
+  .covered {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.4);
+  }
+
+  .burst-panel {
+    border-left: 4px solid var(--rp-yellow-800);
+
+    .bp-head {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--rp-almost-black);
+      margin-bottom: 10px;
+    }
+
+    .bp-defect {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .bp-comment {
+      margin-bottom: 10px;
+
+      .cmt-head {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--rp-charcoal);
+        margin-bottom: 4px;
+      }
+    }
+
+    .bp-scope {
+      font-size: 12px;
+      color: var(--rp-charcoal);
+      margin-bottom: 12px;
+
+      .bp-missing {
+        color: var(--rp-yellow-700);
+      }
+    }
+
+    // SI subtype dropdown: appears only when the project has more than one
+    // System Issue type; the pill itself is the trigger.
+    .si-pick-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .si-pick-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
+
+      .caret {
+        font-size: 9px;
+        color: var(--rp-e-400);
+      }
+    }
+    .si-pick-pop {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 220px;
+      padding: 6px;
+      background: var(--rp-bg-000);
+      border: 1px solid var(--rp-e-200);
+      border-radius: 8px;
+      box-shadow: var(--rp-shadow-secondary);
+    }
+    .si-opt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: none;
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12.5px;
+      color: var(--rp-almost-black);
+      text-align: left;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--rp-bg-100);
+      }
+      &.sel {
+        background: var(--rp-topaz-100);
+      }
+    }
+
+    .bp-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+  }
+
+  .verdict-bar {
+    padding: 15px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .vb-verdict-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .flabel {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--rp-charcoal);
+    }
+    .prov-tag {
+      font-size: 12px;
+      color: var(--rp-e-400);
+      font-style: italic;
+
+      &.picked {
+        color: var(--rp-topaz-pressed);
+        font-style: normal;
+      }
+    }
+
+    // Stage 2 (ruling C4): the abstain suffix on a Past decision / Similar
+    // failures tag, when the analyzer itself did not apply. Amber, its own
+    // segment, no p* number (that number's home is the story reason line).
+    .prov-suffix {
+      margin-left: 6px;
+      padding-left: 6px;
+      border-left: 1px solid var(--rp-e-200);
+      font-style: normal;
+      color: #8a6a12;
+    }
+
+    // §5.9 field: dashed empty state until a decision exists
+    .picker-anchor {
+      position: relative;
+      display: inline-block;
+    }
+    .defect-select {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      box-sizing: border-box;
+      background: var(--rp-bg-000);
+      color: var(--rp-almost-black);
+      border: 1px solid var(--rp-e-200);
+      border-radius: 3px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+
+      &:hover {
+        border-color: var(--rp-e-300);
+      }
+      &.empty {
+        border-style: dashed;
+        color: var(--rp-e-400);
+        font-weight: 400;
+      }
+      .caret {
+        color: var(--rp-e-300);
+        font-size: 11px;
+      }
+      &.empty .caret {
+        color: var(--rp-e-400);
+      }
+    }
+    // floating picker panel: choosing a defect never pushes the layout
+    .picker-pop {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      z-index: 5;
+      // Size to fit the per-group columns at their full name width (capped so it
+      // never overflows the modal / viewport).
+      width: max-content;
+      max-width: min(90vw, 920px);
+      max-height: 320px;
+      overflow: auto;
+      background: var(--rp-bg-000);
+      border: 1px solid var(--rp-e-200);
+      border-radius: 8px;
+      box-shadow: var(--rp-shadow-secondary);
+      padding: 12px 14px;
+
+      .picker-head {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--rp-almost-black);
+        margin-bottom: 9px;
+      }
+
+      // Mockup manual picker (mockup-bench-rp.html .pick-pill): RP light pills, one
+      // VERTICAL COLUMN per defect group (Product Bug column, Automation Bug column,
+      // ...), each column stacking that group's types. Each pill a colour dot + full
+      // type name. Selected = topaz-100 fill + topaz border; dock-highlighted = ring.
+      .pick-groups {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 9px 16px;
+      }
+      .pill-row {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .pick-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--rp-bg-000);
+        color: var(--rp-almost-black);
+        border: 1px solid var(--rp-e-200);
+        border-radius: 100px;
+        padding: 5px 13px 5px 10px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: border-color 0.15s, background 0.15s;
+
+        .dot {
+          width: 10px;
+          height: 10px;
+        }
+        &:hover {
+          border-color: var(--rp-e-300);
+        }
+        &.sel {
+          background: var(--rp-topaz-100);
+          border-color: var(--rp-topaz);
+        }
+        &.hl {
+          border-color: var(--rp-yellow-800);
+          box-shadow: 0 0 0 1px var(--rp-yellow-800) inset;
+        }
+      }
+      .manual-help {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--rp-e-400);
+      }
+    }
+
+    .comment-pane {
+      background: var(--rp-bg-100);
+      border: 1px solid var(--rp-e-100);
+      border-radius: 8px;
+      padding: 12px 13px;
+    }
+    .cmt-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--rp-charcoal);
+      margin-bottom: 8px;
+    }
+    .cmt-prefill-note {
+      font-size: 11.5px;
+      color: var(--rp-sm-warning);
+      margin-bottom: 6px;
+    }
+    // collapsed 36px "Add a reason" row: text present means saved, empty means not
+    .cmt-collapsed {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      align-self: flex-start;
+      min-height: 36px;
+      box-sizing: border-box;
+      background: var(--rp-bg-000);
+      border: 1px dashed var(--rp-e-200);
+      border-radius: 3px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-family: var(--rp-font);
+      color: var(--rp-e-400);
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--rp-e-300);
+        color: var(--rp-charcoal);
+      }
+    }
+
+    .commit-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--rp-e-100);
+      padding-top: 12px;
+    }
+    .commit-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      flex: 1;
+      min-width: 380px;
+    }
+    // executionSection is kept mounted only for its log fetch; it renders nothing.
+    .exec-mount {
+      display: none;
+    }
+    // Exact-group bulk-apply toggle (replaces the removed fuzzy scope control).
+    .scope-check {
+      display: inline-flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--rp-almost-black);
+      cursor: pointer;
+      max-width: 620px;
+
+      input {
+        margin-top: 2px;
+        flex: none;
+        cursor: pointer;
+      }
+      .scope-note {
+        color: var(--rp-e-400);
+      }
+    }
+    .scope-only {
+      font-size: 12.5px;
+      color: var(--rp-e-400);
+    }
+
+    // ---- Stage 3: two-tier override expander (verdict 6.4) -----------------
+    .override {
+      font-size: 13px;
+      color: var(--rp-almost-black);
+
+      &.collapsed {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      &.open {
+        flex: 1 1 100%;
+        border: 1px solid var(--rp-e-200);
+        border-radius: 8px;
+        background: var(--rp-bg-050, #f7f8fa);
+        padding: 10px 12px;
+      }
+      .ov-count {
+        color: var(--rp-charcoal);
+      }
+      .ov-included {
+        color: var(--rp-topaz-pressed);
+        font-weight: 500;
+      }
+      .ov-review {
+        border: none;
+        background: none;
+        padding: 0;
+        color: var(--rp-topaz);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+
+        &:disabled {
+          color: var(--rp-e-300);
+          cursor: not-allowed;
+        }
+      }
+      .ov-hint {
+        color: var(--rp-e-400);
+        font-size: 12px;
+        font-style: italic;
+      }
+      .ov-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 8px;
+
+        .ov-count {
+          font-weight: 600;
+        }
+        .ov-collapse {
+          border: none;
+          background: none;
+          padding: 0;
+          color: var(--rp-topaz);
+          font-size: 12px;
+          cursor: pointer;
+        }
+      }
+      .ov-loading {
+        color: var(--rp-e-400);
+        font-size: 12px;
+        padding: 4px 0;
+      }
+      .ov-tier {
+        padding: 6px 0;
+
+        & + .ov-tier {
+          border-top: 1px solid var(--rp-e-100);
+          margin-top: 4px;
+        }
+      }
+      .ov-tier-head {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--rp-e-400);
+        margin-bottom: 6px;
+      }
+      .ov-toggle {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        cursor: pointer;
+        color: #8a6a12;
+        font-weight: 500;
+
+        input {
+          margin-top: 2px;
+          flex: none;
+          cursor: pointer;
+        }
+      }
+      .ov-list {
+        list-style: none;
+        margin: 6px 0 0;
+        padding: 0;
+      }
+      .ov-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 0;
+        min-height: 24px;
+
+        &.readonly {
+          color: var(--rp-e-500, #59647a);
+          padding-left: 24px;
+        }
+        .ov-check {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+
+          input {
+            flex: none;
+            cursor: pointer;
+          }
+        }
+        .ov-name {
+          color: var(--rp-almost-black);
+          max-width: 240px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .ov-by {
+          color: var(--rp-e-400);
+          font-size: 12px;
+        }
+        .ov-marker {
+          font-size: 11px;
+          color: var(--rp-e-400);
+
+          &.diff {
+            color: #8a6a12;
+            font-weight: 500;
+          }
+        }
+        .ov-cmt {
+          color: var(--rp-e-400);
+          font-size: 12px;
+          font-style: italic;
+          max-width: 220px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+      .ov-disclosure {
+        margin-top: 8px;
+        color: #8a6a12;
+        font-size: 12px;
+      }
+    }
+    .commit-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: none;
+      margin-left: auto;
+    }
+    .fanout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+      box-sizing: border-box;
+      background: var(--rp-bg-000);
+      border: 1px solid var(--rp-topaz);
+      color: var(--rp-topaz);
+      border-radius: 3px;
+      padding: 7px 11px;
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: var(--rp-font);
+      cursor: pointer;
+
+      &:hover {
+        background: var(--rp-topaz-100);
+      }
+    }
+    .vb-recap {
+      font-size: 12.5px;
+      color: var(--rp-topaz);
+
+      &.warn {
+        color: var(--rp-sm-warning);
+        font-weight: 500;
+      }
+      // Stage 3: tier-B different-type replacement is the strongest warning.
+      &.strong {
+        color: #b34700;
+        font-weight: 600;
+      }
+    }
+    // the footer InfoBlock re-parented as the recap's expandable detail
+  }
+
+  // scope control (reused OptionsSection) light skin, CSS only ---------------
+  .scope-slot {
+    border-radius: 8px;
+    transition: box-shadow 0.2s;
+    flex: 1 1 420px;
+    min-width: 320px;
+    max-width: 100%;
+
+    &.pulse {
+      animation: benchScopePulse 1.6s ease-out;
+    }
+
+    [class*='optionsSection__header-block--'] {
+      margin: 0 0 8px;
+      align-items: baseline;
+    }
+    [class*='optionsSection__header--'] {
+      color: var(--rp-charcoal);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 20px;
+    }
+    [class*='optionsSection__no-items--'] {
+      color: var(--rp-e-400);
+      border-color: var(--rp-e-100);
+    }
+    [class*='optionsSection__items-list--'] {
+      max-height: 220px;
+      overflow: auto;
+    }
+    [class*='inputDropdownRadio__selected-option--'] {
+      color: var(--rp-almost-black);
+      font-size: 13px;
+      line-height: 20px;
+    }
+    [class*='inputDropdownRadio__options--'] {
+      background: var(--rp-bg-000);
+      border: 1px solid var(--rp-e-200);
+      box-shadow: var(--rp-shadow-secondary);
+      padding: 14px 16px;
+    }
+    [class*='itemsListHeader__checkbox-label--'] {
+      color: var(--rp-charcoal);
+    }
+  }
+}
+
+@keyframes benchScopePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 176, 209, 0.55);
+  }
+  60% {
+    box-shadow: 0 0 0 6px rgba(0, 176, 209, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 176, 209, 0);
+  }
+}
+
+@keyframes benchLinePulse {
+  0% {
+    background: rgba(0, 176, 209, 0.3);
+  }
+  100% {
+    background: transparent;
+  }
+}

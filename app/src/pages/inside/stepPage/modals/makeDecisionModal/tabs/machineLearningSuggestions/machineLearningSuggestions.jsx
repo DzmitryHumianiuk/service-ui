@@ -16,13 +16,37 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames/bind';
 import { useIntl } from 'react-intl';
 import { useTracking } from 'react-tracking';
 import { TO_INVESTIGATE_LOCATOR_PREFIX } from 'common/constants/defectTypes';
+import { DefectTypeItem } from 'pages/inside/common/defectTypeItem';
+import { GhostButton } from 'components/buttons/ghostButton';
 import { TestItemDetails } from '../../elements/testItemDetails';
 import { messages } from '../../messages';
+import {
+  isRubricHypothesis,
+  parseProvenance,
+  parseRubricModelVer,
+  parseRubricWhy,
+  PROVENANCE,
+} from '../../analyzerSuggestionMeta';
+import styles from './machineLearningSuggestions.scss';
 
-export const MachineLearningSuggestions = ({ modalState, itemData, eventsInfo }) => {
+const cx = classNames.bind(styles);
+
+const PROVENANCE_MESSAGE = {
+  [PROVENANCE.RUBRIC]: messages.provenanceLlmHypothesis,
+  [PROVENANCE.HUMAN]: messages.provenanceHumanNeighbor,
+  [PROVENANCE.AUTO]: messages.provenanceAutoNeighbor,
+};
+
+export const MachineLearningSuggestions = ({
+  modalState,
+  itemData,
+  eventsInfo,
+  onAcceptHypothesis,
+}) => {
   const { formatMessage } = useIntl();
   const { trackEvent } = useTracking();
 
@@ -38,8 +62,51 @@ export const MachineLearningSuggestions = ({ modalState, itemData, eventsInfo })
     return eventsInfo.getOpenStackTraceEvent(defectFromTIGroup, 'ml_suggestions');
   };
 
+  // analyzer-ng metadata — defensively parsed; a stock analyzer yields null/'' here
+  // and only the plain <TestItemDetails> below is rendered (no behaviour change).
+  const rubric = isRubricHypothesis(suggestRs);
+  const provenance = parseProvenance(suggestRs);
+  const provenanceMessage = provenance && PROVENANCE_MESSAGE[provenance];
+  const whyText = rubric ? parseRubricWhy(suggestRs?.modelInfo) : '';
+  const modelVer = rubric ? parseRubricModelVer(suggestRs?.modelInfo) : '';
+
   return (
     <>
+      <div className={cx('suggestion-meta')}>
+        <div className={cx('suggested-defect-row')}>
+          <span className={cx('meta-caption')}>{formatMessage(messages.suggestedDefect)}</span>
+          {suggestRs?.issueType && (
+            <DefectTypeItem type={suggestRs.issueType} className={cx('suggested-defect-pill')} />
+          )}
+          {provenanceMessage && (
+            <span
+              className={cx('provenance-chip', { 'provenance-chip-rubric': rubric })}
+              title={rubric && modelVer ? modelVer : undefined}
+            >
+              {formatMessage(provenanceMessage)}
+            </span>
+          )}
+        </div>
+        {rubric && whyText && (
+          <div className={cx('rubric-why')} data-provenance="ai_suggested">
+            <span className={cx('meta-caption')}>{formatMessage(messages.rubricWhyCaption)}</span>
+            <p className={cx('rubric-why-text')}>{whyText}</p>
+          </div>
+        )}
+        {rubric && (
+          <div className={cx('rubric-accept')}>
+            <GhostButton
+              onClick={() =>
+                onAcceptHypothesis({ issueType: suggestRs.issueType, comment: whyText })
+              }
+              color="''"
+              appearance="topaz"
+            >
+              {formatMessage(messages.acceptHypothesis)}
+            </GhostButton>
+          </div>
+        )}
+      </div>
       <TestItemDetails
         item={item}
         logs={logs}
@@ -59,8 +126,10 @@ MachineLearningSuggestions.propTypes = {
   modalState: PropTypes.object.isRequired,
   itemData: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
   eventsInfo: PropTypes.object,
+  onAcceptHypothesis: PropTypes.func,
 };
 MachineLearningSuggestions.defaultProps = {
   itemData: {},
   eventsInfo: {},
+  onAcceptHypothesis: () => {},
 };

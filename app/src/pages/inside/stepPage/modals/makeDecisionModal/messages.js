@@ -266,4 +266,909 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.defectReplaceWith',
     defaultMessage: 'The defect type will be changed to',
   },
+  // analyzer-ng suggestion metadata (see analyzerSuggestionMeta.js)
+  suggestedDefect: {
+    id: 'MakeDecisionModal.suggestedDefect',
+    defaultMessage: 'Suggested defect',
+  },
+  llmHypothesisTab: {
+    id: 'MakeDecisionModal.llmHypothesisTab',
+    defaultMessage: 'LLM hypothesis',
+  },
+  llmHypothesisHeader: {
+    id: 'MakeDecisionModal.llmHypothesisHeader',
+    defaultMessage: 'LLM cold-start hypothesis · {value}% rubric confidence',
+  },
+  provenanceLlmHypothesis: {
+    id: 'MakeDecisionModal.provenanceLlmHypothesis',
+    defaultMessage: 'LLM hypothesis (provisional)',
+  },
+  provenanceHumanNeighbor: {
+    id: 'MakeDecisionModal.provenanceHumanNeighbor',
+    defaultMessage: 'human-labeled neighbor',
+  },
+  provenanceAutoNeighbor: {
+    id: 'MakeDecisionModal.provenanceAutoNeighbor',
+    defaultMessage: 'auto-labeled neighbor',
+  },
+  rubricWhyCaption: {
+    id: 'MakeDecisionModal.rubricWhyCaption',
+    defaultMessage: 'AI hypothesis: why this defect',
+  },
+  acceptHypothesis: {
+    id: 'MakeDecisionModal.acceptHypothesis',
+    defaultMessage: 'Accept & edit comment',
+  },
+
+  // ---------------------------------------------------------------------------
+  // The Bench (redesign). Plain global English, NO em-dashes / long dashes in any
+  // rendered string (lens-bench-english §0). Copy is quoted from lens-bench-english.md
+  // and mockup-bench-rp.html, with em-dashes rewritten as plain punctuation.
+  // ---------------------------------------------------------------------------
+  benchIdentityCap: {
+    id: 'MakeDecisionModal.benchIdentityCap',
+    defaultMessage: 'Make a decision',
+  },
+  benchThisFailure: {
+    id: 'MakeDecisionModal.benchThisFailure',
+    defaultMessage: 'This failure',
+  },
+  benchSoloLine: {
+    id: 'MakeDecisionModal.benchSoloLine',
+    defaultMessage: 'No other test in this run fails this way.',
+  },
+  benchShowErrorLog: {
+    id: 'MakeDecisionModal.benchShowErrorLog',
+    defaultMessage: 'Show error log',
+  },
+  benchHideErrorLog: {
+    id: 'MakeDecisionModal.benchHideErrorLog',
+    defaultMessage: 'Hide error log',
+  },
+  benchStackAndContext: {
+    id: 'MakeDecisionModal.benchStackAndContext',
+    defaultMessage: 'Stack trace and context (ERROR level)',
+  },
+  benchInspectorItem: {
+    id: 'MakeDecisionModal.benchInspectorItem',
+    defaultMessage: 'Open full details in Inspector',
+  },
+  benchInspectorReason: {
+    id: 'MakeDecisionModal.benchInspectorReason',
+    defaultMessage: 'See the full reason in Inspector',
+  },
+  benchInspectorDetails: {
+    id: 'MakeDecisionModal.benchInspectorDetails',
+    defaultMessage: 'See details in Inspector',
+  },
+  benchWhy: {
+    id: 'MakeDecisionModal.benchWhy',
+    defaultMessage: 'why?',
+  },
+  // Group of identical failures (HYBRID)
+  benchGroupHead: {
+    id: 'MakeDecisionModal.benchGroupHead',
+    defaultMessage: 'This exact failure shows up in {count} tests in this run.',
+  },
+  benchGroupFraction: {
+    id: 'MakeDecisionModal.benchGroupFraction',
+    defaultMessage: '{count} of the {failed} failed tests in this run share this signature.',
+  },
+  benchBurstFraction: {
+    id: 'MakeDecisionModal.benchBurstFraction',
+    defaultMessage:
+      '{pct}% of the failed tests in this Launch fail with this exact signature ({count} of {failed}).',
+  },
+  benchBurstRule: {
+    id: 'MakeDecisionModal.benchBurstRule',
+    defaultMessage:
+      'When one signature covers more than {gate}% of a Launch, the cause is usually one {label}, not {count} separate bugs.',
+  },
+  benchBurstApplySi: {
+    id: 'MakeDecisionModal.benchBurstApplySi',
+    defaultMessage: 'Apply System Issue',
+  },
+  benchBurstPanelTitle: {
+    id: 'MakeDecisionModal.benchBurstPanelTitle',
+    defaultMessage: 'Apply System Issue to the burst group',
+  },
+  benchBurstPanelScope: {
+    id: 'MakeDecisionModal.benchBurstPanelScope',
+    defaultMessage:
+      'Will be applied to {breadth} tests: this one and {others} more from this burst group.',
+  },
+  benchBurstPanelOnlySelf: {
+    id: 'MakeDecisionModal.benchBurstPanelOnlySelf',
+    defaultMessage: 'Only this test is in the apply list right now.',
+  },
+  benchBurstPanelPartial: {
+    id: 'MakeDecisionModal.benchBurstPanelPartial',
+    defaultMessage:
+      '{missing} of the {count} group tests are not in the apply list: they are already investigated or were not found by the log search.',
+  },
+  benchBurstPanelBack: {
+    id: 'MakeDecisionModal.benchBurstPanelBack',
+    defaultMessage: 'Back',
+  },
+  benchProvFromBurst: {
+    id: 'MakeDecisionModal.benchProvFromBurst',
+    defaultMessage: 'set from the burst context',
+  },
+  benchBurstHonesty: {
+    id: 'MakeDecisionModal.benchBurstHonesty',
+    defaultMessage:
+      'This is run context. The checks below scored this test on its own and did not use the group.',
+  },
+  benchGroupShowing: {
+    id: 'MakeDecisionModal.benchGroupShowing',
+    defaultMessage: 'Showing {shown} of {count}.',
+  },
+  benchGroupShowTests: {
+    id: 'MakeDecisionModal.benchGroupShowTests',
+    defaultMessage: 'Show the tests',
+  },
+  benchGroupHideTests: {
+    id: 'MakeDecisionModal.benchGroupHideTests',
+    defaultMessage: 'Hide the tests',
+  },
+  benchGroupPointer: {
+    id: 'MakeDecisionModal.benchGroupPointer',
+    defaultMessage: 'Apply one decision to similar tests when you commit',
+  },
+  benchGroupThisTest: {
+    id: 'MakeDecisionModal.benchGroupThisTest',
+    defaultMessage: '(this test)',
+  },
+  // Bench heading
+  benchCap: {
+    id: 'MakeDecisionModal.benchCap',
+    defaultMessage: 'The analyzer checked this three ways, strongest first',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Decision story block (Act 1). Deterministic narration of what the analyzer
+  // recorded, sourced from the journey decision block only. Copy verbatim from
+  // mdm-logic-VERDICT.md sections 4.1-4.3 and mirrored in mockup-mdm-states.html.
+  // {defect} = project defect type name, {p} = calibrated confidence (2dp),
+  // {x} = log similarity (alike), {rel} = prebuilt relative-time string.
+  // ---------------------------------------------------------------------------
+  benchStoryCap: {
+    id: 'MakeDecisionModal.benchStoryCap',
+    defaultMessage: 'What the analyzer did',
+  },
+  benchStorySrcData: {
+    id: 'MakeDecisionModal.benchStorySrcData',
+    defaultMessage: 'from analyzer data',
+  },
+  benchStorySrcAi: {
+    id: 'MakeDecisionModal.benchStorySrcAi',
+    defaultMessage: 'written by AI',
+  },
+  benchStoryTime: {
+    id: 'MakeDecisionModal.benchStoryTime',
+    defaultMessage: 'decided {rel}',
+  },
+  // Headlines per outcome (verdict 4.2). O1/O2/O3 share one headline; O5/O6/O7
+  // share one headline. Reuse the shared key for the sibling outcomes.
+  benchStoryHeadO1: {
+    id: 'MakeDecisionModal.benchStoryHeadO1',
+    defaultMessage: 'Applied on its own: {defect}.',
+  },
+  // Prefix-only variant of benchStoryHeadO1: the defect is rendered as a
+  // defect-label pill (a React element) alongside, so it cannot be an ICU
+  // placeholder value (this RP's formatMessage crashes on element values).
+  benchStoryHeadAppliedPre: {
+    id: 'MakeDecisionModal.benchStoryHeadAppliedPre',
+    defaultMessage: 'Applied on its own:',
+  },
+  benchStoryHeadO4: {
+    id: 'MakeDecisionModal.benchStoryHeadO4',
+    defaultMessage: 'Found a likely answer, did not apply it.',
+  },
+  benchStoryHeadO5: {
+    id: 'MakeDecisionModal.benchStoryHeadO5',
+    defaultMessage: 'Looked, but did not apply anything.',
+  },
+  benchStoryHeadO8: {
+    id: 'MakeDecisionModal.benchStoryHeadO8',
+    defaultMessage: "Nothing in this project's history matched.",
+  },
+  benchStoryHeadO9: {
+    id: 'MakeDecisionModal.benchStoryHeadO9',
+    defaultMessage: 'Not analyzed yet.',
+  },
+  benchStoryHeadO9b: {
+    id: 'MakeDecisionModal.benchStoryHeadO9b',
+    defaultMessage: "Could not load the analyzer's record.",
+  },
+  // Reason lines per outcome (verdict 4.2). O10 has no reason (silent hero owns it).
+  benchStoryReasonO1: {
+    id: 'MakeDecisionModal.benchStoryReasonO1',
+    defaultMessage: 'This exact failure was decided before. Confidence {p}, above the 0.75 auto line.',
+  },
+  benchStoryReasonO2: {
+    id: 'MakeDecisionModal.benchStoryReasonO2',
+    defaultMessage:
+      'It matched a known pattern from this project. Confidence {p}, above the 0.75 auto line.',
+  },
+  benchStoryReasonO3: {
+    id: 'MakeDecisionModal.benchStoryReasonO3',
+    defaultMessage: 'The trained model was sure. Confidence {p}, above the 0.75 auto line.',
+  },
+  benchStoryReasonO4: {
+    id: 'MakeDecisionModal.benchStoryReasonO4',
+    defaultMessage:
+      'Best answer: {defect} at confidence {p}. Under the 0.75 auto line, so the call is yours.',
+  },
+  benchStoryReasonO5: {
+    id: 'MakeDecisionModal.benchStoryReasonO5',
+    defaultMessage: 'The best candidate reached confidence {p}, under the 0.45 suggest line.',
+  },
+  benchStoryReasonO6: {
+    id: 'MakeDecisionModal.benchStoryReasonO6',
+    defaultMessage: 'The nearest match shares only common boilerplate lines. That is not real evidence.',
+  },
+  benchStoryReasonO7: {
+    id: 'MakeDecisionModal.benchStoryReasonO7',
+    defaultMessage: 'No rule or model was confident enough.',
+  },
+  benchStoryReasonO8: {
+    id: 'MakeDecisionModal.benchStoryReasonO8',
+    defaultMessage: 'The AI wrote a first guess instead. It is on offer below, not applied.',
+  },
+  benchStoryReasonO9: {
+    id: 'MakeDecisionModal.benchStoryReasonO9',
+    defaultMessage: 'The analyzer has no decision recorded for this item.',
+  },
+  benchStoryReasonO9b: {
+    id: 'MakeDecisionModal.benchStoryReasonO9b',
+    defaultMessage: 'Open Inspector to see the decision history.',
+  },
+  benchStoryBridge: {
+    id: 'MakeDecisionModal.benchStoryBridge',
+    defaultMessage:
+      "Alike is not confident: {x} measures how similar the log text is, while {p} is the analyzer's confidence that the matched defect is right, and it stayed below the 0.45 suggest line.",
+  },
+  benchStoryBridgeUnlabeled: {
+    id: 'MakeDecisionModal.benchStoryBridgeUnlabeled',
+    defaultMessage: 'The closest matches have no confirmed defect behind them.',
+  },
+  benchStoryExplCap: {
+    id: 'MakeDecisionModal.benchStoryExplCap',
+    defaultMessage: 'Explanation',
+  },
+  benchStoryMore: {
+    id: 'MakeDecisionModal.benchStoryMore',
+    defaultMessage: 'Show more',
+  },
+  benchStoryLess: {
+    id: 'MakeDecisionModal.benchStoryLess',
+    defaultMessage: 'Show less',
+  },
+
+  // ---------------------------------------------------------------------------
+  // Offers region head + banner (Act 2). Copy verbatim from mdm-logic-VERDICT.md
+  // section 5 and mirrored in mockup-mdm-states.html. Decision fact from the
+  // journey decision route, offers fact from the live reply. {defect}, {other}.
+  // ---------------------------------------------------------------------------
+  benchOffersCap: {
+    id: 'MakeDecisionModal.benchOffersCap',
+    defaultMessage: 'What the analyzer offers now',
+  },
+  benchBannerB1: {
+    id: 'MakeDecisionModal.benchBannerB1',
+    defaultMessage: "The analyzer decided: {defect}. Today's check agrees.",
+  },
+  benchBannerB1Help: {
+    id: 'MakeDecisionModal.benchBannerB1Help',
+    defaultMessage: 'Press <k>Enter</k> to keep it, or pick another type below.',
+  },
+  benchBannerB2: {
+    id: 'MakeDecisionModal.benchBannerB2',
+    defaultMessage: "The analyzer decided: {defect}. Today's check leans {other}.",
+  },
+  benchBannerB2Help: {
+    id: 'MakeDecisionModal.benchBannerB2Help',
+    defaultMessage: 'Compare the offers below, then keep or change the label.',
+  },
+  benchBannerB2e: {
+    id: 'MakeDecisionModal.benchBannerB2e',
+    defaultMessage: "The analyzer decided: {defect}. Today's check found no match.",
+  },
+  benchBannerB2eHelp: {
+    id: 'MakeDecisionModal.benchBannerB2eHelp',
+    defaultMessage: 'The label stands unless you change it.',
+  },
+  benchBannerB3: {
+    id: 'MakeDecisionModal.benchBannerB3',
+    defaultMessage: 'No auto decision. The offers lean {defect}.',
+  },
+  benchBannerB3Help: {
+    id: 'MakeDecisionModal.benchBannerB3Help',
+    defaultMessage: 'Press <k>Enter</k> to arm it, <k>Enter</k> again to apply.',
+  },
+  benchBannerB4e: {
+    id: 'MakeDecisionModal.benchBannerB4e',
+    defaultMessage: 'No auto decision. The analyzer leans {defect}; other offers disagree.',
+  },
+  benchBannerB4eHelp: {
+    id: 'MakeDecisionModal.benchBannerB4eHelp',
+    defaultMessage: 'Press <k>Enter</k> to arm its pick, or read the rivals first.',
+  },
+  benchBannerB4: {
+    id: 'MakeDecisionModal.benchBannerB4',
+    defaultMessage: 'No auto decision. The offers point different ways.',
+  },
+  benchBannerB4Help: {
+    id: 'MakeDecisionModal.benchBannerB4Help',
+    defaultMessage: 'Read both sides, then pick.',
+  },
+  benchBannerB5: {
+    id: 'MakeDecisionModal.benchBannerB5',
+    defaultMessage: 'No auto decision. The lead offer is an AI guess, not a match.',
+  },
+  benchBannerB5Help: {
+    id: 'MakeDecisionModal.benchBannerB5Help',
+    defaultMessage: 'Read it before you use it.',
+  },
+  benchBannerB6u: {
+    id: 'MakeDecisionModal.benchBannerB6u',
+    defaultMessage: 'No auto decision. Close look-alikes exist, but none has a confirmed defect.',
+  },
+  benchBannerB6uHelp: {
+    id: 'MakeDecisionModal.benchBannerB6uHelp',
+    defaultMessage: 'Compare the logs, then decide.',
+  },
+  benchBannerB6: {
+    id: 'MakeDecisionModal.benchBannerB6',
+    defaultMessage: 'No auto decision, and nothing to offer.',
+  },
+  benchBannerB6Help: {
+    id: 'MakeDecisionModal.benchBannerB6Help',
+    defaultMessage: 'Everything it found is below the line, in the dock. You decide.',
+  },
+  benchBannerB6n: {
+    id: 'MakeDecisionModal.benchBannerB6n',
+    defaultMessage: 'No auto decision, and nothing to offer.',
+  },
+  benchBannerB6nHelp: {
+    id: 'MakeDecisionModal.benchBannerB6nHelp',
+    defaultMessage: 'You decide.',
+  },
+  benchBannerBF: {
+    id: 'MakeDecisionModal.benchBannerBF',
+    defaultMessage: 'The offers lean {defect}.',
+  },
+  benchBannerBFHelp: {
+    id: 'MakeDecisionModal.benchBannerBFHelp',
+    defaultMessage: 'Pick a card or a defect type.',
+  },
+  // The three checks
+  benchCheckPast: {
+    id: 'MakeDecisionModal.benchCheckPast',
+    defaultMessage: 'Past decision',
+  },
+  benchCheckPastRole: {
+    id: 'MakeDecisionModal.benchCheckPastRole',
+    defaultMessage: 'A person already decided this exact same failure.',
+  },
+  benchCheckPastRolePerson: {
+    id: 'MakeDecisionModal.benchCheckPastRolePerson',
+    defaultMessage: '{who} decided this exact same failure.',
+  },
+  benchCheckPastInRun: {
+    id: 'MakeDecisionModal.benchCheckPastInRun',
+    defaultMessage: 'In {run}',
+  },
+  benchCheckPastNoMatch: {
+    id: 'MakeDecisionModal.benchCheckPastNoMatch',
+    defaultMessage: 'No exact match found.',
+  },
+  benchCheckPastNoMatchProv: {
+    id: 'MakeDecisionModal.benchCheckPastNoMatchProv',
+    defaultMessage: 'Nothing in history has the same error fingerprint.',
+  },
+  benchCheckPastStrong: {
+    id: 'MakeDecisionModal.benchCheckPastStrong',
+    defaultMessage: 'Strong enough to apply on its own.',
+  },
+  benchCheckSimilar: {
+    id: 'MakeDecisionModal.benchCheckSimilar',
+    defaultMessage: 'Similar failures',
+  },
+  benchCheckSimilarRole: {
+    id: 'MakeDecisionModal.benchCheckSimilarRole',
+    defaultMessage: 'Failures that look like this one, from a trained model.',
+  },
+  benchCheckSimilarNone: {
+    id: 'MakeDecisionModal.benchCheckSimilarNone',
+    defaultMessage: 'No similar failures cleared the bar.',
+  },
+  benchCheckAi: {
+    id: 'MakeDecisionModal.benchCheckAi',
+    defaultMessage: 'AI guess',
+  },
+  benchCheckAiRole: {
+    id: 'MakeDecisionModal.benchCheckAiRole',
+    defaultMessage: 'With no earlier match, the AI reasons from a set of rules.',
+  },
+  benchCheckAiNone: {
+    id: 'MakeDecisionModal.benchCheckAiNone',
+    defaultMessage: 'No AI guess for this failure.',
+  },
+  benchCheckAiOrigin: {
+    id: 'MakeDecisionModal.benchCheckAiOrigin',
+    defaultMessage: 'No earlier match to lean on.',
+  },
+  benchNotConfirmed: {
+    id: 'MakeDecisionModal.benchNotConfirmed',
+    defaultMessage: 'not confirmed',
+  },
+  benchUseThisGuess: {
+    id: 'MakeDecisionModal.benchUseThisGuess',
+    defaultMessage: 'Use this guess',
+  },
+  benchUseThisAnswer: {
+    id: 'MakeDecisionModal.benchUseThisAnswer',
+    defaultMessage: 'Use this answer',
+  },
+  benchSameAnswer: {
+    id: 'MakeDecisionModal.benchSameAnswer',
+    defaultMessage: 'same answer',
+  },
+  benchCompareLogs: {
+    id: 'MakeDecisionModal.benchCompareLogs',
+    defaultMessage: 'Compare logs',
+  },
+  // Card arming (mockup-mdm-states): a whole card is the arm target. The "leading"
+  // chip marks the card a bare Enter would arm first; the armed note appears on
+  // the card once it is loaded into the verdict.
+  benchLeadingChip: {
+    id: 'MakeDecisionModal.benchLeadingChip',
+    defaultMessage: 'leading',
+  },
+  benchLeadingChipTitle: {
+    id: 'MakeDecisionModal.benchLeadingChipTitle',
+    defaultMessage: 'The lean. A bare Enter arms this card first.',
+  },
+  benchArmedNote: {
+    id: 'MakeDecisionModal.benchArmedNote',
+    defaultMessage: 'Armed. Apply commits {defect}.',
+  },
+  // Band phrases (next to any number)
+  benchBandAuto: {
+    id: 'MakeDecisionModal.benchBandAuto',
+    defaultMessage: 'Will apply on its own',
+  },
+  benchBandSuggest: {
+    id: 'MakeDecisionModal.benchBandSuggest',
+    defaultMessage: 'Suggested, please confirm',
+  },
+  benchBandAbstain: {
+    id: 'MakeDecisionModal.benchBandAbstain',
+    defaultMessage: 'Not sure, your call',
+  },
+  benchBandRubric: {
+    id: 'MakeDecisionModal.benchBandRubric',
+    defaultMessage: 'A guess, check it first',
+  },
+  benchAlike: {
+    id: 'MakeDecisionModal.benchAlike',
+    defaultMessage: '{score} alike.',
+  },
+  // Similarity card only: names the number as a LOG similarity (cosine), so it is
+  // never read as a model confidence. The abstain card keeps benchAlike.
+  benchLogsAlike: {
+    id: 'MakeDecisionModal.benchLogsAlike',
+    defaultMessage: 'Logs {score} alike.',
+  },
+  benchScopeGroupToggle: {
+    id: 'MakeDecisionModal.benchScopeGroupToggle',
+    defaultMessage:
+      'Also apply to {count} more {count, plural, one {test} other {tests}} with the same failure signature',
+  },
+  benchScopeGroupDecided: {
+    id: 'MakeDecisionModal.benchScopeGroupDecided',
+    defaultMessage:
+      '({count} more in this group are already decided and will be left alone.)',
+  },
+  benchScopeThisOnly: {
+    id: 'MakeDecisionModal.benchScopeThisOnly',
+    defaultMessage: 'This decision applies to this test only.',
+  },
+  // silent-no-signal empty state (gpos-silent-VERDICT copy, verbatim)
+  benchSilentCap: {
+    id: 'MakeDecisionModal.benchSilentCap',
+    defaultMessage: 'NO ANALYZER SIGNAL',
+  },
+  benchSilentTitle: {
+    id: 'MakeDecisionModal.benchSilentTitle',
+    defaultMessage: 'No error logs to analyze',
+  },
+  benchSilentTitleTip: {
+    id: 'MakeDecisionModal.benchSilentTitleTip',
+    defaultMessage:
+      'The analyzer builds its answer from ERROR-level logs. This test has none, so it has nothing to suggest. Pick a defect type yourself.',
+  },
+  benchSilentBody: {
+    id: 'MakeDecisionModal.benchSilentBody',
+    defaultMessage:
+      'This test failed but recorded no ERROR-level logs. The analyzer reads the error text to find matching failures, so with no error logs there is nothing for it to match and no answer to suggest here. This one is a manual call.',
+  },
+  benchSilentNext: {
+    id: 'MakeDecisionModal.benchSilentNext',
+    defaultMessage: 'Choose a defect type below, add a reason if it helps, then Apply.',
+  },
+  benchSilentNote: {
+    id: 'MakeDecisionModal.benchSilentNote',
+    defaultMessage:
+      'The analyzer only reads ERROR-level logs. Any lower-level logs or a screenshot may still be on the item if you want more context.',
+  },
+  benchDecidedByInRun: {
+    id: 'MakeDecisionModal.benchDecidedByInRun',
+    defaultMessage: '{who} decided this in {run}',
+  },
+  benchDecidedBy: {
+    id: 'MakeDecisionModal.benchDecidedBy',
+    defaultMessage: '{who} decided this in an earlier run',
+  },
+  benchDecidedRun: {
+    id: 'MakeDecisionModal.benchDecidedRun',
+    defaultMessage: 'launch #{number}',
+  },
+  benchDecidedSomePerson: {
+    id: 'MakeDecisionModal.benchDecidedSomePerson',
+    defaultMessage: 'A person',
+  },
+  benchDecidedTheAnalyzer: {
+    id: 'MakeDecisionModal.benchDecidedTheAnalyzer',
+    defaultMessage: 'The analyzer',
+  },
+  benchAiGuessPct: {
+    id: 'MakeDecisionModal.benchAiGuessPct',
+    defaultMessage: "The AI's own guess ({pct}%). Check it first.",
+  },
+  // The line + declined dock
+  benchLineLabel: {
+    id: 'MakeDecisionModal.benchLineLabel',
+    defaultMessage: 'Decision boundary',
+  },
+  benchLineTooltip: {
+    id: 'MakeDecisionModal.benchLineTooltip',
+    defaultMessage:
+      'Below this line the analyzer does not suggest an answer. These lines are shown only for you to judge.',
+  },
+  benchDockToggle: {
+    id: 'MakeDecisionModal.benchDockToggle',
+    defaultMessage: 'The analyzer said no to these ({count})',
+  },
+  benchDockNote: {
+    id: 'MakeDecisionModal.benchDockNote',
+    defaultMessage: 'Shown only so you can decide.',
+  },
+  benchDockTooWeak: {
+    id: 'MakeDecisionModal.benchDockTooWeak',
+    defaultMessage: 'Too weak to suggest ({score}).',
+  },
+  // The synthesized declined row (ek=decline) speaks the CONFIDENCE scale, never
+  // alike (verdict MS7 / migration item 5). Plain below-line rows keep benchDockTooWeak.
+  benchDockDeclineConf: {
+    id: 'MakeDecisionModal.benchDockDeclineConf',
+    defaultMessage: 'Confidence {p}, under the 0.45 suggest line.',
+  },
+  benchDockChoose: {
+    id: 'MakeDecisionModal.benchDockChoose',
+    defaultMessage: 'Choose this myself',
+  },
+  benchDockBestScore: {
+    id: 'MakeDecisionModal.benchDockBestScore',
+    defaultMessage: 'Best candidate scored {score}. That is below the bar. See the list below.',
+  },
+  // AI decision summary (the stage band)
+  benchAiSumRubricToggle: {
+    id: 'MakeDecisionModal.benchAiSumRubricToggle',
+    defaultMessage: 'The AI guess reasons differently. Show.',
+  },
+  benchAiSumToComment: {
+    id: 'MakeDecisionModal.benchAiSumToComment',
+    defaultMessage: 'Add this reason to the comment',
+  },
+  benchStageNotSureSub: {
+    id: 'MakeDecisionModal.benchStageNotSureSub',
+    defaultMessage:
+      'The list it said no to is open below the line. Read this test log, put a look-alike next to it to check, then pick a defect type yourself. You can also use the AI guess and edit the comment.',
+  },
+  benchStageReviewNote: {
+    id: 'MakeDecisionModal.benchStageReviewNote',
+    defaultMessage: 'Edit the comment, then apply.',
+  },
+  benchStageAgreeCap: {
+    id: 'MakeDecisionModal.benchStageAgreeCap',
+    defaultMessage: 'Why the analyzer thinks this (written by AI)',
+  },
+  // Compare
+  benchCmpTitle: {
+    id: 'MakeDecisionModal.benchCmpTitle',
+    defaultMessage: 'Is this the same failure?',
+  },
+  benchCmpClose: {
+    id: 'MakeDecisionModal.benchCmpClose',
+    defaultMessage: 'Close compare',
+  },
+  benchCmpHelp: {
+    id: 'MakeDecisionModal.benchCmpHelp',
+    defaultMessage:
+      'Green lines match. Highlighted lines differ. If the key error line matches, it is likely the same failure.',
+  },
+  benchCmpSame: {
+    id: 'MakeDecisionModal.benchCmpSame',
+    defaultMessage: 'Same in both',
+  },
+  benchCmpDiff: {
+    id: 'MakeDecisionModal.benchCmpDiff',
+    defaultMessage: 'Different',
+  },
+  benchCmpLeft: {
+    id: 'MakeDecisionModal.benchCmpLeft',
+    defaultMessage: 'This failure',
+  },
+  benchCmpLeftSuffix: {
+    id: 'MakeDecisionModal.benchCmpLeftSuffix',
+    defaultMessage: '(the item under analysis)',
+  },
+  benchCmpRight: {
+    id: 'MakeDecisionModal.benchCmpRight',
+    defaultMessage: 'The one you picked',
+  },
+  benchCmpOnlyHere: {
+    id: 'MakeDecisionModal.benchCmpOnlyHere',
+    defaultMessage: 'only here',
+  },
+  benchCmpOnlyThere: {
+    id: 'MakeDecisionModal.benchCmpOnlyThere',
+    defaultMessage: 'only there',
+  },
+  benchCmpNoLog: {
+    id: 'MakeDecisionModal.benchCmpNoLog',
+    defaultMessage: 'This candidate has no error log to compare.',
+  },
+  benchCmpNotSame: {
+    id: 'MakeDecisionModal.benchCmpNotSame',
+    defaultMessage: 'Not the same failure?',
+  },
+  benchCmpManual: {
+    id: 'MakeDecisionModal.benchCmpManual',
+    defaultMessage: 'Choose a defect type yourself',
+  },
+  benchCmpKeyMatch: {
+    id: 'MakeDecisionModal.benchCmpKeyMatch',
+    defaultMessage: 'The key error line matches.',
+  },
+  benchCmpKeyDiff: {
+    id: 'MakeDecisionModal.benchCmpKeyDiff',
+    defaultMessage: 'The key error lines are different.',
+  },
+  // Verdict bar
+  benchVbDefect: {
+    id: 'MakeDecisionModal.benchVbDefect',
+    defaultMessage: 'Defect:',
+  },
+  benchVbChooseDefect: {
+    id: 'MakeDecisionModal.benchVbChooseDefect',
+    defaultMessage: 'Choose a defect type',
+  },
+  benchVbPickAnswer: {
+    id: 'MakeDecisionModal.benchVbPickAnswer',
+    defaultMessage: 'Pick your answer',
+  },
+  benchVbApplyTo: {
+    id: 'MakeDecisionModal.benchVbApplyTo',
+    defaultMessage: 'Apply to:',
+  },
+  benchVbFanout: {
+    id: 'MakeDecisionModal.benchVbFanout',
+    defaultMessage: 'Apply to all {count}',
+  },
+  benchVbChooseMyself: {
+    id: 'MakeDecisionModal.benchVbChooseMyself',
+    defaultMessage: 'Choose myself',
+  },
+  benchManualHead: {
+    id: 'MakeDecisionModal.benchManualHead',
+    defaultMessage: 'Pick a defect type',
+  },
+  benchManualHelp: {
+    id: 'MakeDecisionModal.benchManualHelp',
+    defaultMessage: 'Pick the defect type that fits this failure.',
+  },
+  benchCmtAddReason: {
+    id: 'MakeDecisionModal.benchCmtAddReason',
+    defaultMessage: 'Add a reason',
+  },
+  benchCmtPrefillNote: {
+    id: 'MakeDecisionModal.benchCmtPrefillNote',
+    defaultMessage: 'Filled from the AI reason. Change it if you want.',
+  },
+  benchCmtPlaceholder: {
+    id: 'MakeDecisionModal.benchCmtPlaceholder',
+    defaultMessage: 'Why this defect? (optional)',
+  },
+  // Provenance tag on the verdict selector
+  // Source tags (verdict 6.1). One per armed source; render only when a type is
+  // in the field. The abstain suffix is appended, never baked in.
+  benchProvYouPicked: {
+    id: 'MakeDecisionModal.benchProvYouPicked',
+    defaultMessage: 'you picked this',
+  },
+  benchProvFromAi: {
+    id: 'MakeDecisionModal.benchProvFromAi',
+    defaultMessage: 'from AI guess, not confirmed',
+  },
+  benchProvFromSimilarity: {
+    id: 'MakeDecisionModal.benchProvFromSimilarity',
+    defaultMessage: 'from Similar failures, logs {score} alike',
+  },
+  benchProvFromPrecedent: {
+    id: 'MakeDecisionModal.benchProvFromPrecedent',
+    defaultMessage: 'from Past decision',
+  },
+  benchProvDockAdopt: {
+    id: 'MakeDecisionModal.benchProvDockAdopt',
+    defaultMessage: 'from a declined suggestion, your call',
+  },
+  // Appended to a Past decision / Similar failures tag when the decision route
+  // itself abstained (ruling C4; no p* here, its home is the story reason line).
+  benchProvAbstainSuffix: {
+    id: 'MakeDecisionModal.benchProvAbstainSuffix',
+    defaultMessage: 'analyzer did not apply this',
+  },
+  // Shown at the comment when a re-arm kept the human's edited text instead of
+  // overwriting it with the new source's prefill (dirty rule, verdict 6.1).
+  benchProvCommentKept: {
+    id: 'MakeDecisionModal.benchProvCommentKept',
+    defaultMessage: 'comment kept from your edit',
+  },
+  // Recap
+  benchRecapThisItem: {
+    id: 'MakeDecisionModal.benchRecapThisItem',
+    defaultMessage: 'This will be applied to this item.',
+  },
+  // Amber recap fragment when a human arms an offer the analyzer itself did not
+  // apply on its own (verdict 6.5, ruling C4).
+  benchRecapAbstain: {
+    id: 'MakeDecisionModal.benchRecapAbstain',
+    defaultMessage: 'The analyzer did not apply this on its own.',
+  },
+  benchRecapGroup: {
+    id: 'MakeDecisionModal.benchRecapGroup',
+    defaultMessage: 'This will apply to all {count} matching tests in this run.',
+  },
+  benchRecapWarnConfirm: {
+    id: 'MakeDecisionModal.benchRecapWarnConfirm',
+    defaultMessage: 'Your own choice (the analyzer said no). Click the highlighted type to confirm.',
+  },
+  benchRecapWarnCovers: {
+    id: 'MakeDecisionModal.benchRecapWarnCovers',
+    defaultMessage: 'Your own choice (the analyzer said no) applies to {count} items.',
+  },
+  benchBurstRecapWarn: {
+    id: 'MakeDecisionModal.benchBurstRecapWarn',
+    defaultMessage:
+      'You are about to mark several tests as Product Bug. In this run, {count} of {failed} failures share this exact signature. That usually points to one system issue. Check again before you apply.',
+  },
+
+  // ---- Stage 3: recap matrix fragments (verdict 6.5) -----------------------
+  // One sentence assembled from fragments; zero fragments omitted; the worst
+  // warning wins the color. Each fragment is a clause joined with a space.
+  benchRecapBase: {
+    id: 'MakeDecisionModal.benchRecapBase',
+    defaultMessage: 'Will set {type} on this test.',
+  },
+  benchRecapFragComment: {
+    id: 'MakeDecisionModal.benchRecapFragComment',
+    defaultMessage: 'and save your comment.',
+  },
+  benchRecapFragGroup: {
+    id: 'MakeDecisionModal.benchRecapFragGroup',
+    defaultMessage: 'and {count} more with the same failure signature.',
+  },
+  benchRecapFragGroupCap: {
+    id: 'MakeDecisionModal.benchRecapFragGroupCap',
+    defaultMessage: 'and {shown} of {total} more with the same failure signature.',
+  },
+  benchRecapFragTierA: {
+    id: 'MakeDecisionModal.benchRecapFragTierA',
+    defaultMessage:
+      'Overwrites {count, plural, one {# analyzer label} other {# analyzer labels}}.',
+  },
+  benchRecapFragTierBSame: {
+    id: 'MakeDecisionModal.benchRecapFragTierBSame',
+    defaultMessage:
+      'Restates {count, plural, one {# human decision} other {# human decisions}}.',
+  },
+  benchRecapFragTierBDiff: {
+    id: 'MakeDecisionModal.benchRecapFragTierBDiff',
+    defaultMessage:
+      'Replaces {count, plural, one {# human decision} other {# human decisions}} of a different type, decided by {names}.',
+  },
+  benchRecapFragTierBDiffNoNames: {
+    id: 'MakeDecisionModal.benchRecapFragTierBDiffNoNames',
+    defaultMessage:
+      'Replaces {count, plural, one {# human decision} other {# human decisions}} of a different type.',
+  },
+  benchRecapNames2: {
+    id: 'MakeDecisionModal.benchRecapNames2',
+    defaultMessage: '{a} and {b}',
+  },
+  benchRecapNamesMore: {
+    id: 'MakeDecisionModal.benchRecapNamesMore',
+    defaultMessage: '{a}, {b} and others',
+  },
+
+  // ---- Stage 3: two-tier override expander (verdict 6.4) --------------------
+  benchOverrideReview: {
+    id: 'MakeDecisionModal.benchOverrideReview',
+    defaultMessage: 'Already decided: {count, plural, one {# test} other {# tests}}.',
+  },
+  benchOverrideReviewCap: {
+    id: 'MakeDecisionModal.benchOverrideReviewCap',
+    defaultMessage: 'Already decided: {shown} of {total} tests.',
+  },
+  benchOverrideReviewAction: {
+    id: 'MakeDecisionModal.benchOverrideReviewAction',
+    defaultMessage: 'Review',
+  },
+  benchOverrideCollapse: {
+    id: 'MakeDecisionModal.benchOverrideCollapse',
+    defaultMessage: 'Collapse',
+  },
+  benchOverrideIncluded: {
+    id: 'MakeDecisionModal.benchOverrideIncluded',
+    defaultMessage: '{included} included',
+  },
+  benchOverrideArmFirst: {
+    id: 'MakeDecisionModal.benchOverrideArmFirst',
+    defaultMessage: 'pick a verdict first',
+  },
+  benchOverrideLoading: {
+    id: 'MakeDecisionModal.benchOverrideLoading',
+    defaultMessage: 'Loading decisions...',
+  },
+  benchOverrideTierAHead: {
+    id: 'MakeDecisionModal.benchOverrideTierAHead',
+    defaultMessage: 'Decided by the analyzer',
+  },
+  benchOverrideTierBHead: {
+    id: 'MakeDecisionModal.benchOverrideTierBHead',
+    defaultMessage: 'Decided by people',
+  },
+  benchOverrideTierAToggle: {
+    id: 'MakeDecisionModal.benchOverrideTierAToggle',
+    defaultMessage:
+      'Include {count, plural, one {# test} other {# tests}} the analyzer decided. Your decision will overwrite the machine labels.',
+  },
+  benchOverrideTierADecidedBy: {
+    id: 'MakeDecisionModal.benchOverrideTierADecidedBy',
+    defaultMessage: 'decided by the analyzer',
+  },
+  benchOverrideDecidedBy: {
+    id: 'MakeDecisionModal.benchOverrideDecidedBy',
+    defaultMessage: 'decided by {who}',
+  },
+  benchOverrideDecidedEarlier: {
+    id: 'MakeDecisionModal.benchOverrideDecidedEarlier',
+    defaultMessage: 'decided earlier',
+  },
+  benchOverrideSameType: {
+    id: 'MakeDecisionModal.benchOverrideSameType',
+    defaultMessage: 'same type',
+  },
+  benchOverrideDiffType: {
+    id: 'MakeDecisionModal.benchOverrideDiffType',
+    defaultMessage: 'different type',
+  },
+  benchOverrideCommentReplace: {
+    id: 'MakeDecisionModal.benchOverrideCommentReplace',
+    defaultMessage: 'Your comment will replace theirs on the included tests.',
+  },
 });

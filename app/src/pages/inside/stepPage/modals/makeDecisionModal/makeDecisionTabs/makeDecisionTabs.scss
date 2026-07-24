@@ -206,6 +206,11 @@
     }
   }
 
+  .suggest-item-rubric {
+    border-bottom-style: dashed;
+    border-bottom-color: $COLOR--topaz;
+  }
+
   .suggest-wrapper {
     display: flex;
   }
