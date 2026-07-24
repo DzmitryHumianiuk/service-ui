@@ -207,6 +207,23 @@ export const getInspectorJourneyApiUrl = (projectId, itemId) => {
   return `/inspector/api/item/${projectId}/${itemId}/journey`;
 };
 
+// Same-origin proxy to the analyzer's own health. Used to decide whether an
+// explanation is still on its way: the analyzer writes the decision at once and
+// fills the explanation afterwards, so a missing explanation means either "still
+// being written" or "not coming at all", and only the live LLM state tells the
+// two apart.
+export const getAnalyzerHealthApiUrl = () => '/inspector/api/analyzer-health';
+
+// True when the analyzer can still produce an explanation right now. Reads the
+// health payload defensively: anything unexpected means "do not promise text".
+export const canLlmStillAnswer = (healthPayload) => {
+  const llm = healthPayload && healthPayload.health && healthPayload.health.llm;
+  if (!llm || typeof llm !== 'object') {
+    return false;
+  }
+  return !!llm.enabled && !!llm.available && llm.breaker_state !== 'open';
+};
+
 // ---------------------------------------------------------------------------
 // Launch context (burst) trigger. The analyzer computes the burst signal
 // (grouping.dominant); si_prior is only a fallback for payloads where the
@@ -280,6 +297,40 @@ const _groupsNamedIn = (text) => {
   }
   return _GROUP_NAME_PATTERNS.filter(([, re]) => re.test(text)).map(([g]) => g);
 };
+
+/*
+ * Fold a line onto the analyzer's own masking vocabulary so a quote and a log
+ * line can be compared.
+ *
+ * The two sides arrive in different shapes. The item's log lines are RAW
+ * ("expected response to have status code 200 but got 400"), while an explainer
+ * quote was produced from the analyzer's already MASKED signature ("... status
+ * code <NUM> but got <NUM>"). Running both through this function lands them on
+ * the same string.
+ *
+ * The rules mirror MASKING_RULES in src/analyzer_ng/ml/drain.py, in the same
+ * order (URL, IP, UUID, HEX, PATH, NUM). Tokens that are already masked contain
+ * no digits, slashes or scheme, so they pass through untouched, which makes the
+ * function idempotent and safe to run over either side.
+ *
+ * Earlier this replaced digits with 'N' instead, so a quote holding <NUM> could
+ * never equal a log line holding 200. Since the quote gate fails closed, that
+ * hid the explanation on every failure whose message carries a number, which is
+ * most of them.
+ */
+export const normalizeLine = (line) =>
+  String(line == null ? '' : line)
+    .replace(/https?:\/\/[^\s"'<>]+/g, '<URL>')
+    .replace(/\b(?:\d{1,3}\.){3}\d{1,3}(?::\d{1,5})?\b/g, '<IP>')
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '<UUID>')
+    .replace(/\b0[xX][0-9a-fA-F]+\b|\b[0-9a-fA-F]{16,}\b/g, '<HEX>')
+    .replace(/(?:[A-Za-z]:)?(?:[\\/][\w.-]+){2,}/g, '<PATH>')
+    // Plain digits last, so the rules above keep their own tokens. No lookbehind
+    // here on purpose: it is applied to both sides equally, and older Safari
+    // does not support lookbehind in a regular expression.
+    .replace(/\d+(?:\.\d+)?/g, '<NUM>')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 /*
  * Reoriented freshness gate (verdict 4.4). It NO LONGER compares the cached

@@ -51,7 +51,9 @@ import {
 import {
   BANDS,
   PROVENANCE,
+  canLlmStillAnswer,
   deriveBanner,
+  getAnalyzerHealthApiUrl,
   deriveDecisionStory,
   getInspectorJourneyApiUrl,
   getInspectorJourneyUrl,
@@ -60,6 +62,7 @@ import {
   isDecisionFresh,
   isDeclineRow,
   isRubricHypothesis,
+  normalizeLine,
   parseBand,
   parseConfidence,
   parseExplanation,
@@ -81,16 +84,6 @@ const toLines = (logs) =>
         .filter((t) => t.length)
         .map((text) => ({ text, id: log.id })),
     );
-
-const normalizeLine = (line) =>
-  line
-    .replace(/\b0x[0-9a-f]+\b/gi, '0xHEX')
-    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'UUID')
-    .replace(/\d{4}-\d{2}-\d{2}[ t]\d{2}:\d{2}:\d{2}[.\d]*/gi, 'TS')
-    .replace(/:\d+/g, ':N')
-    .replace(/\d+/g, 'N')
-    .replace(/\s+/g, ' ')
-    .trim();
 
 const scoreToAlike = (matchScore) =>
   typeof matchScore === 'number' ? (matchScore / 100).toFixed(2) : '';
@@ -324,6 +317,9 @@ export const Bench = ({
   // the story so a late fetch never flashes a wrong O9 headline before it settles.
   const [journeyError, setJourneyError] = useState(false);
   const [journeyResolved, setJourneyResolved] = useState(false);
+  // One extra journey read while an explanation is still being written (see the
+  // wait state below). Bumped at most once, so this can never become a poll.
+  const [journeyRetry, setJourneyRetry] = useState(0);
   const currentItemId = currentItem?.id || currentItem?.itemId;
   useEffect(() => {
     const apiUrl = getInspectorJourneyApiUrl(projectId, currentItemId);
@@ -372,7 +368,7 @@ export const Bench = ({
     return () => {
       cancelled = true;
     };
-  }, [projectId, currentItemId, isBulkOperation]);
+  }, [projectId, currentItemId, isBulkOperation, journeyRetry]);
 
   const grouping = journey?.grouping || null;
   const groupMembers = (grouping?.members || []).filter((m) => !m.is_self);
@@ -680,6 +676,72 @@ export const Bench = ({
   // reply): the ng37 "agree on abstain" bug came from mixing the two. The AI
   // paragraph is gated separately by the reoriented isDecisionFresh.
   const journeyDecision = journey?.decision || null;
+  const hasDecisionRecord = !!journeyDecision;
+  const decisionHasExplanation = !!(
+    journeyDecision &&
+    typeof journeyDecision.explanation === 'string' &&
+    journeyDecision.explanation.trim()
+  );
+  // Wait state for a missing explanation. The analyzer writes the decision at
+  // once and fills the explanation afterwards, so "no explanation yet" can mean
+  // either "still being written" or "not coming at all". Ask the analyzer which
+  // one it is: historically more than half of all explainer runs ended with the
+  // breaker open, and a spinner that promises text which never arrives is worse
+  // than no spinner. Timings come from the same source: on this data a written
+  // explanation lands well inside a minute for a single item, so the wait is
+  // capped rather than open ended, and no exact number is shown to the reader.
+  //   null      - nothing to wait for (or the question does not apply)
+  //   'waiting' - the analyzer is able to answer and has not answered yet
+  //   'none'    - no explanation is coming, or waiting has been given up
+  const [explanationWait, setExplanationWait] = useState(null);
+  useEffect(() => {
+    if (isBulkOperation || !journeyResolved || journeyError) {
+      return undefined;
+    }
+    if (!hasDecisionRecord || decisionHasExplanation) {
+      setExplanationWait(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const timers = [];
+    window
+      .fetch(getAnalyzerHealthApiUrl())
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload) => {
+        if (cancelled) {
+          return;
+        }
+        if (!canLlmStillAnswer(payload)) {
+          setExplanationWait('none');
+          return;
+        }
+        setExplanationWait('waiting');
+        if (journeyRetry === 0) {
+          // One re-read, so an explanation that lands while the modal is open
+          // still shows up without the reader having to close and reopen it.
+          timers.push(window.setTimeout(() => !cancelled && setJourneyRetry(1), 20000));
+        }
+        timers.push(window.setTimeout(() => !cancelled && setExplanationWait('none'), 60000));
+      })
+      .catch(() => {
+        // Health unknown: say nothing rather than promise an answer.
+        if (!cancelled) {
+          setExplanationWait('none');
+        }
+      });
+    return () => {
+      cancelled = true;
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+  }, [
+    isBulkOperation,
+    journeyResolved,
+    journeyError,
+    hasDecisionRecord,
+    decisionHasExplanation,
+    journeyRetry,
+    currentItemId,
+  ]);
   const explainerEvent =
     (journey?.llm?.events || []).find((ev) => ev && ev.role === 'explainer') || null;
   const quotedLines = (explainerEvent?.output?.quoted_lines || []).filter(
@@ -2099,6 +2161,22 @@ export const Bench = ({
                     )}
                   </button>
                 )}
+              </div>
+            )}
+            {/* The explanation has not been written yet and the analyzer says it
+                still can write one. Shown only in that case, never when the LLM
+                is off or its breaker is open, and it gives up on its own. */}
+            {!aiFresh && explanationWait === 'waiting' && (
+              <div className={cx('story-ai', 'ai-pending')}>
+                <div className={cx('ai-caprow')}>
+                  <span className={cx('ai-cap')}>
+                    {formatMessage(messages.benchStoryExplCap)}
+                  </span>
+                </div>
+                <div className={cx('ai-waiting')} role="status">
+                  <span className={cx('ai-waiting-dot')} aria-hidden="true" />
+                  <span>{formatMessage(messages.benchStoryExplPending)}</span>
+                </div>
               </div>
             )}
           </>

@@ -537,6 +537,10 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchStoryExplCap',
     defaultMessage: 'Explanation',
   },
+  benchStoryExplPending: {
+    id: 'MakeDecisionModal.benchStoryExplPending',
+    defaultMessage: 'Writing the explanation. This usually takes less than a minute.',
+  },
   benchStoryMore: {
     id: 'MakeDecisionModal.benchStoryMore',
     defaultMessage: 'Show more',
