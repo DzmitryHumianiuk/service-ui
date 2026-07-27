@@ -897,6 +897,41 @@
       letter-spacing: 0.4px;
       text-transform: uppercase;
       cursor: help;
+
+      // Whether the model stands behind the offer. "Not backed" replaces the
+      // leading chip rather than sitting next to it: a card the model declined
+      // must not also wear the badge that says it leads.
+      &.unbacked {
+        border-color: #d9b382;
+        background: #fdf4e6;
+        color: #8a5a00;
+      }
+
+      &.backed {
+        border-color: #a9d3ba;
+        background: #eef7f1;
+        color: #2b6b47;
+      }
+    }
+    // The model's own verdict on the offer above it. Reads as a caption, not as
+    // a second headline: the defect pill stays the loudest thing on the card.
+    .model-verdict {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #8a5a00;
+
+      &.good {
+        color: #2b6b47;
+      }
+    }
+    // How thin the comparison pool is. Only rendered for a small pool, so it is
+    // absent from every card in a project that has history.
+    .evidence-base {
+      margin-top: 2px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--rp-gray-secondary, #8b94a3);
     }
     // The armed note at the card foot (mockup .armed-note).
     .armed-note {

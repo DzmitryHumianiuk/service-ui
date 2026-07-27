@@ -636,6 +636,14 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchBannerB6Help',
     defaultMessage: 'Everything it found is below the line, in the dock. You decide.',
   },
+  benchBannerB6s: {
+    id: 'MakeDecisionModal.benchBannerB6s',
+    defaultMessage: 'No auto decision, and no offer the model stands behind.',
+  },
+  benchBannerB6sHelp: {
+    id: 'MakeDecisionModal.benchBannerB6sHelp',
+    defaultMessage: 'The offer below matches on log text only. This one is your call.',
+  },
   benchBannerB6n: {
     id: 'MakeDecisionModal.benchBannerB6n',
     defaultMessage: 'No auto decision, and nothing to offer.',
@@ -782,6 +790,67 @@ export const messages = defineMessages({
   benchLogsAlike: {
     id: 'MakeDecisionModal.benchLogsAlike',
     defaultMessage: 'Logs {score} alike.',
+  },
+  benchLogsAlikeBut: {
+    id: 'MakeDecisionModal.benchLogsAlikeBut',
+    defaultMessage: 'Logs {score} alike, but {what}.',
+  },
+  benchMismatchIdentifiers: {
+    id: 'MakeDecisionModal.benchMismatchIdentifiers',
+    defaultMessage: 'no shared identifiers',
+  },
+  benchMismatchStatusCodes: {
+    id: 'MakeDecisionModal.benchMismatchStatusCodes',
+    defaultMessage: 'different status codes',
+  },
+  benchMismatchTemplates: {
+    id: 'MakeDecisionModal.benchMismatchTemplates',
+    defaultMessage: 'no shared log lines',
+  },
+  benchMismatchJoin: {
+    id: 'MakeDecisionModal.benchMismatchJoin',
+    defaultMessage: '{first} and {second}',
+  },
+  benchTagNotBacked: {
+    id: 'MakeDecisionModal.benchTagNotBacked',
+    defaultMessage: 'Not backed',
+  },
+  benchTagModelAgrees: {
+    id: 'MakeDecisionModal.benchTagModelAgrees',
+    defaultMessage: 'Model agrees',
+  },
+  benchSimilarRoleUnbacked: {
+    id: 'MakeDecisionModal.benchSimilarRoleUnbacked',
+    defaultMessage: 'Found by log search. The model did not confirm it.',
+  },
+  benchSimilarRoleBacked: {
+    id: 'MakeDecisionModal.benchSimilarRoleBacked',
+    defaultMessage: 'Failures that look like this one, confirmed by the model.',
+  },
+  benchModelNoCall: {
+    id: 'MakeDecisionModal.benchModelNoCall',
+    defaultMessage: 'The model made no call here ({p}, needs {tau}).',
+  },
+  benchModelNoCallPlain: {
+    id: 'MakeDecisionModal.benchModelNoCallPlain',
+    defaultMessage: 'The model made no call on this failure.',
+  },
+  benchModelDiffers: {
+    id: 'MakeDecisionModal.benchModelDiffers',
+    defaultMessage: 'The model called this {other} instead ({p}).',
+  },
+  benchModelDiffersPlain: {
+    id: 'MakeDecisionModal.benchModelDiffersPlain',
+    defaultMessage: 'The model called this {other} instead.',
+  },
+  benchModelBacks: {
+    id: 'MakeDecisionModal.benchModelBacks',
+    defaultMessage: 'The model backs this at {p}.',
+  },
+  benchThinEvidence: {
+    id: 'MakeDecisionModal.benchThinEvidence',
+    defaultMessage:
+      'Only {n} earlier {n, plural, one {failure} other {failures}} to compare against.',
   },
   benchScopeGroupToggle: {
     id: 'MakeDecisionModal.benchScopeGroupToggle',

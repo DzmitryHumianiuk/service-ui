@@ -49,11 +49,19 @@ import {
   SELECT_DEFECT_MANUALLY,
 } from '../constants';
 import {
+  BACKING,
   BANDS,
+  MISMATCH,
   PROVENANCE,
   canLlmStillAnswer,
+  classicalVerdict,
   deriveBanner,
+  deriveMismatchClauses,
+  deriveOfferBacking,
   emptyReplyVariant,
+  evidenceBaseCount,
+  offersRestOnSimilarityAlone,
+  parseFeatures,
   getAnalyzerHealthApiUrl,
   deriveDecisionStory,
   getInspectorJourneyApiUrl,
@@ -832,8 +840,26 @@ export const Bench = ({
   const vouchedGroups = new Set(vouchedRows.map((r) => groupRef(r.issueType)).filter(Boolean));
   const leanRow = vouchedRows[0] || autoRow || topSuggest || null;
 
+  // Does the model stand behind the offer the cards lead with? matchScore is a log
+  // similarity, so a single neighbour can lead on text alone while the model that
+  // scored it refused to move. Read once here and reused by the card and the banner
+  // so the two can never say different things about the same offer.
+  const classicalCall = classicalVerdict(journeyDecision);
+  const topSuggestFeatures = topSuggest ? parseFeatures(topSuggest.suggestRs) : {};
+  const topSuggestBacking = deriveOfferBacking({
+    ng1: topSuggest ? parseNgVersion(topSuggest.suggestRs) : false,
+    offerGroup: topSuggest ? groupRef(topSuggest.issueType) : null,
+    classical: classicalCall,
+  });
+  const topSuggestMismatch = deriveMismatchClauses(topSuggestFeatures);
+  const topSuggestEvidence = evidenceBaseCount(topSuggestFeatures);
+
   const offers = {
     empty: parsed.length === 0,
+    similarityOnly: offersRestOnSimilarityAlone({
+      backingState: topSuggestBacking.state,
+      mismatchClauses: topSuggestMismatch,
+    }),
     hasVouched: vouchedRows.length > 0,
     converge: vouchedRows.length > 0 && vouchedGroups.size === 1,
     split: vouchedGroups.size > 1,
@@ -1136,6 +1162,112 @@ export const Bench = ({
       {formatMessage(messages.benchLeadingChip)}
     </span>
   );
+
+  // ---- Similar failures card: what the model says about the offer -----------
+  // Four states, and only one of them adds anything. UNKNOWN covers a stock or
+  // legacy analyzer whose reply we cannot read, and there the card renders
+  // exactly as it did before this change.
+  const backingChip =
+    topSuggestBacking.state === BACKING.BACKED ? (
+      <span className={cx('lean-chip', 'backed')}>
+        {formatMessage(messages.benchTagModelAgrees)}
+      </span>
+    ) : topSuggestBacking.state === BACKING.UNKNOWN ? null : (
+      <span className={cx('lean-chip', 'unbacked')}>
+        {formatMessage(messages.benchTagNotBacked)}
+      </span>
+    );
+
+  const similarRoleMessage =
+    topSuggestBacking.state === BACKING.BACKED
+      ? messages.benchSimilarRoleBacked
+      : topSuggestBacking.state === BACKING.UNKNOWN
+        ? messages.benchCheckSimilarRole
+        : messages.benchSimilarRoleUnbacked;
+
+  const MISMATCH_MESSAGE = {
+    [MISMATCH.IDENTIFIERS]: messages.benchMismatchIdentifiers,
+    [MISMATCH.STATUS_CODES]: messages.benchMismatchStatusCodes,
+    [MISMATCH.TEMPLATES]: messages.benchMismatchTemplates,
+  };
+  // "Logs 0.91 alike" on its own reads as evidence. When the model did not back
+  // the offer, the same line carries what failed to match, which is the fact that
+  // decides whether the number means anything.
+  const mismatchText = (() => {
+    if (topSuggestBacking.state === BACKING.BACKED || !topSuggestMismatch.length) {
+      return '';
+    }
+    const parts = topSuggestMismatch.map((id) => formatMessage(MISMATCH_MESSAGE[id]));
+    return parts.length === 1
+      ? parts[0]
+      : formatMessage(messages.benchMismatchJoin, { first: parts[0], second: parts[1] });
+  })();
+  const alikeLine = topSuggest
+    ? mismatchText
+      ? formatMessage(messages.benchLogsAlikeBut, {
+          score: scoreToAlike(topSuggest.score),
+          what: mismatchText,
+        })
+      : (
+          <>
+            <b>
+              {formatMessage(messages.benchLogsAlike, { score: scoreToAlike(topSuggest.score) })}
+            </b>{' '}
+            {formatMessage(messages.benchBandSuggest)}
+          </>
+        )
+    : null;
+
+  // The model's own number belongs to the model's own answer. For NOT_BACKED that
+  // answer was "no call", so the number is never printed beside the defect pill
+  // where it would read as belief in that defect.
+  const modelVerdictLine = (() => {
+    const { state, confidence, otherGroup } = topSuggestBacking;
+    const p = typeof confidence === 'number' ? confidence.toFixed(2) : null;
+    const tau =
+      typeof journeyDecision?.tau_suggest === 'number'
+        ? journeyDecision.tau_suggest.toFixed(2)
+        : null;
+    if (state === BACKING.BACKED) {
+      return p ? (
+        <div className={cx('model-verdict', 'good')}>
+          {formatMessage(messages.benchModelBacks, { p })}
+        </div>
+      ) : null;
+    }
+    if (state === BACKING.NOT_BACKED) {
+      return (
+        <div className={cx('model-verdict')}>
+          {p && tau
+            ? formatMessage(messages.benchModelNoCall, { p, tau })
+            : formatMessage(messages.benchModelNoCallPlain)}
+        </div>
+      );
+    }
+    if (state === BACKING.DIFFERS) {
+      const other = groupDisplayName(otherGroup);
+      if (!other) {
+        return null;
+      }
+      return (
+        <div className={cx('model-verdict')}>
+          {p
+            ? formatMessage(messages.benchModelDiffers, { other, p })
+            : formatMessage(messages.benchModelDiffersPlain, { other })}
+        </div>
+      );
+    }
+    return null;
+  })();
+
+  // Only said when the pool is small enough to explain a thin answer. A mature
+  // project never sees this line.
+  const thinEvidenceLine =
+    topSuggestBacking.state !== BACKING.UNKNOWN && topSuggestEvidence ? (
+      <div className={cx('evidence-base')}>
+        {formatMessage(messages.benchThinEvidence, { n: topSuggestEvidence })}
+      </div>
+    ) : null;
   const armedNote = (locator) => (
     <div className={cx('armed-note')}>
       {formatMessage(messages.benchArmedNote, { defect: defectName(locator) })}
@@ -1217,16 +1349,16 @@ export const Bench = ({
             />
             <div className={cx('method')}>
               <span className={cx('gl')}>≈</span> {formatMessage(messages.benchCheckSimilar)}
-              {enterLeanRow === topSuggest && leadChip}
+              {backingChip}
+              {topSuggestBacking.state === BACKING.UNKNOWN && enterLeanRow === topSuggest && leadChip}
             </div>
-            <div className={cx('role')}>{formatMessage(messages.benchCheckSimilarRole)}</div>
+            <div className={cx('role')}>{formatMessage(similarRoleMessage)}</div>
             <div className={cx('verd-pill')}>
               {renderPill(topSuggest.issueType)}
             </div>
-            <div className={cx('strength')}>
-              <b>{formatMessage(messages.benchLogsAlike, { score: scoreToAlike(topSuggest.score) })}</b>{' '}
-              {formatMessage(messages.benchBandSuggest)}
-            </div>
+            <div className={cx('strength')}>{alikeLine}</div>
+            {modelVerdictLine}
+            {thinEvidenceLine}
             {renderDecidedBy(topSuggest)}
             <div className={cx('card-actions')}>
               <button

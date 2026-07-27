@@ -598,6 +598,7 @@ const _BANNER_HEAD = {
   B5: 'benchBannerB5',
   B6u: 'benchBannerB6u',
   B6: 'benchBannerB6',
+  B6s: 'benchBannerB6s',
   B6n: 'benchBannerB6n',
   BF: 'benchBannerBF',
 };
@@ -669,6 +670,14 @@ export const deriveBanner = ({ decisionOutcome, offers } = {}) => {
     return _banner('B5', {});
   }
 
+  // The leading offer carries a confirmed label, but the model did not stand behind
+  // it and nothing beyond the log text matched. Applies to every non-auto decision:
+  // naming the side the offers lean would lend that side a backing the reply does
+  // not support, and the lean is the only side a single neighbour can have.
+  if (off.similarityOnly) {
+    return _banner('B6s', {});
+  }
+
   // Endorsed suggest.
   if (band === BANDS.SUGGEST) {
     if (off.split) {
@@ -694,3 +703,185 @@ export const deriveBanner = ({ decisionOutcome, offers } = {}) => {
 // this row on the CONFIDENCE scale ("confidence {p}, under the 0.45 suggest line"),
 // never "alike" (verdict MS7 / migration item 5). Plain below-line rows keep "alike".
 export const isDeclineRow = (suggestRs) => parseExplKind(suggestRs) === 'decline';
+
+// ---------------------------------------------------------------------------
+// Does the model stand behind this offer?
+//
+// matchScore is a log similarity, not a belief that the label transfers. Dense
+// e5 cosines sit near 0.9 for any two stack traces out of one suite, so a lone
+// neighbour can lead the offers while the model that scored it refused to move.
+// Everything below reads facts the reply and the journey already carry, decides
+// which of them are safe to state, and leaves the card as it ships today when
+// the analyzer is one whose reply we cannot read.
+// ---------------------------------------------------------------------------
+
+// The row's feature vector as { name: number }. The reply carries the names and
+// the values as two ';'-separated strings of equal length; anything else (stock
+// analyzer, truncated payload, mismatched lengths) yields an empty object, and
+// every reader below then adds nothing to the card.
+export const parseFeatures = (suggestRs) => {
+  const names = suggestRs && suggestRs.modelFeatureNames;
+  const values = suggestRs && suggestRs.modelFeatureValues;
+  if (typeof names !== 'string' || typeof values !== 'string' || !names || !values) {
+    return {};
+  }
+  const nameParts = names.split(';');
+  const valueParts = values.split(';');
+  if (nameParts.length !== valueParts.length) {
+    return {};
+  }
+  const out = {};
+  for (let i = 0; i < nameParts.length; i += 1) {
+    const key = nameParts[i].trim();
+    const n = Number.parseFloat(valueParts[i]);
+    if (key && Number.isFinite(n)) {
+      out[key] = n;
+    }
+  }
+  return out;
+};
+
+// The journey is not consistent about how it names a defect: the nested classical
+// row carries the short code ('ti'), while the decision on record carries the RP
+// locator ('pb001'). _decisionGroup only understands the short form, so strip a
+// locator down to its prefix before asking it.
+const _groupFromLocator = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const match = value.trim().toLowerCase().match(/^([a-z]+)\d+$/);
+  return match ? DECISION_LABEL_TO_GROUP[match[1]] || null : null;
+};
+
+// The classical (retrieval + model) verdict for this item, from the journey.
+// The decision on record can be the cold-start guess, which keeps the classical
+// row it did not displace in a nested `classical` block; when the record is the
+// classical answer itself, it is its own verdict. Returns null when neither
+// resolves, and the caller then states nothing about backing.
+export const classicalVerdict = (journeyDecision) => {
+  if (!journeyDecision || typeof journeyDecision !== 'object') {
+    return null;
+  }
+  const nested = journeyDecision.classical;
+  const row = nested && typeof nested === 'object' ? nested : journeyDecision;
+  if (row === journeyDecision) {
+    const method = typeof row.method === 'string' ? row.method : '';
+    if (method === 'coldstart' || method === 'rule_cold') {
+      return null;
+    }
+  }
+  const group =
+    _decisionGroup(row) || _groupFromLocator(row.predicted_label) || _groupFromLocator(row.predicted_group);
+  const confidence = typeof row.confidence === 'number' ? row.confidence : null;
+  const band = typeof row.band === 'string' ? row.band : null;
+  if (!group && confidence === null && !band) {
+    return null;
+  }
+  return { group, confidence, band };
+};
+
+export const BACKING = {
+  // The model chose this same defect group. The card may lead.
+  BACKED: 'backed',
+  // The model made no call at all on this failure.
+  NOT_BACKED: 'notBacked',
+  // The model made a call, for a different defect group than this offer.
+  DIFFERS: 'differs',
+  // Not an analyzer-ng v1 reply, or no classical verdict to read. Say nothing
+  // new: the card renders exactly as it shipped before this change.
+  UNKNOWN: 'unknown',
+};
+
+const ABSTAIN_BANDS = ['abstain', BANDS.BELOW_SUGGEST];
+
+/*
+ * Backing state for one offer row.
+ *
+ * ng1        - parseNgVersion(suggestRs). False for a stock/legacy analyzer.
+ * offerGroup - defect group typeRef of the offered label.
+ * classical  - classicalVerdict(journeyDecision).
+ *
+ * Returns { state, confidence, otherGroup }. `confidence` is the model's own
+ * number, which belongs to ITS answer and never to the offer: for NOT_BACKED it
+ * is the confidence of the call it declined to make. Null when unresolvable, and
+ * the caller then drops the number rather than inventing one.
+ */
+export const deriveOfferBacking = ({ ng1, offerGroup, classical } = {}) => {
+  if (!ng1 || !classical) {
+    return { state: BACKING.UNKNOWN, confidence: null, otherGroup: null };
+  }
+  const { group, confidence, band } = classical;
+  const belowLine = !!band && ABSTAIN_BANDS.indexOf(band) !== -1;
+  // To Investigate is not a defect the model picked, it is the model declining to
+  // pick one. It can hold that answer confidently and land in the suggest band,
+  // which is why the band alone cannot be trusted to spot an abstain. The number
+  // is only worth printing when the model fell under the line, where it explains
+  // the silence; above the line it is confidence in "no call" and reads as the
+  // opposite of what it means, so it is dropped.
+  if (group === 'TO_INVESTIGATE') {
+    return { state: BACKING.NOT_BACKED, confidence: belowLine ? confidence : null, otherGroup: null };
+  }
+  if (belowLine) {
+    return { state: BACKING.NOT_BACKED, confidence, otherGroup: null };
+  }
+  if (!group || !offerGroup) {
+    return { state: BACKING.UNKNOWN, confidence: null, otherGroup: null };
+  }
+  if (group === offerGroup) {
+    return { state: BACKING.BACKED, confidence, otherGroup: null };
+  }
+  return { state: BACKING.DIFFERS, confidence, otherGroup: group };
+};
+
+// Clause ids for "what does not match", most concrete first.
+export const MISMATCH = {
+  IDENTIFIERS: 'identifiers',
+  STATUS_CODES: 'statusCodes',
+  TEMPLATES: 'templates',
+};
+
+// At most two clauses, and only ones the features can honestly support. The
+// `*_present` companions exist precisely because a zero overlap means "nothing
+// to compare" as often as it means "compared and different"; without the
+// companion at 1 the clause is not stated. The exception fingerprint is left
+// out on purpose: a suggest-band match differs there by construction, so naming
+// it would be noise on every card.
+export const deriveMismatchClauses = (features) => {
+  const f = features || {};
+  const out = [];
+  if (f.identifiers_present === 1 && f.identifier_jaccard_top1 === 0) {
+    out.push(MISMATCH.IDENTIFIERS);
+  }
+  if (f.status_codes_present === 1 && f.status_codes_match_top1 === 0) {
+    out.push(MISMATCH.STATUS_CODES);
+  }
+  if (out.length < 2 && f.top1_jaccard === 0) {
+    out.push(MISMATCH.TEMPLATES);
+  }
+  return out.slice(0, 2);
+};
+
+// How many earlier failures the retrieval had to compare against. n_candidates
+// is stored as len(candidates)/20, so it saturates at 20; the count is only
+// worth saying when it is small enough to explain a thin answer, which is why
+// anything above the threshold returns null and the card stays quiet.
+export const THIN_EVIDENCE_MAX = 5;
+
+export const evidenceBaseCount = (features) => {
+  const raw = features && features.n_candidates;
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) {
+    return null;
+  }
+  const n = Math.round(raw * 20);
+  if (n < 1 || n > THIN_EVIDENCE_MAX) {
+    return null;
+  }
+  return n;
+};
+
+// True when the offers the banner is about rest on similarity alone: the model
+// made no call and the top offer has nothing beyond the log text agreeing with
+// it. The banner then names that state instead of picking the side the offers
+// happen to lean, which is the only side it has.
+export const offersRestOnSimilarityAlone = ({ backingState, mismatchClauses } = {}) =>
+  backingState === BACKING.NOT_BACKED && (mismatchClauses || []).length > 0;
