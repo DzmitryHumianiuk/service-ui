@@ -537,6 +537,11 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchStoryExplCap',
     defaultMessage: 'Explanation',
   },
+  benchEarlyMarkTitle: {
+    id: 'MakeDecisionModal.benchEarlyMarkTitle',
+    defaultMessage:
+      'Early result. This test was analyzed right after it finished, while the launch was still running. The analysis at launch finish may revise it.',
+  },
   benchStoryExplPending: {
     id: 'MakeDecisionModal.benchStoryExplPending',
     defaultMessage: 'Writing the explanation. This usually takes less than a minute.',

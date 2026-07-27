@@ -649,6 +649,24 @@
         border-left-color: var(--rp-e-200);
       }
     }
+    .early-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      margin-left: 7px;
+      border-radius: 50%;
+      border: 1px solid var(--rp-e-300);
+      color: var(--rp-e-400);
+      font-size: 10px;
+      font-style: italic;
+      font-weight: 700;
+      line-height: 1;
+      cursor: help;
+      user-select: none;
+      vertical-align: 1px;
+    }
     .ai-waiting {
       display: flex;
       align-items: center;

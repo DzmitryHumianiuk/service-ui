@@ -2130,6 +2130,17 @@ export const Bench = ({
                   which writes a fresh suggestion row (created_at=now), so the journey
                   always reads a just-created decision and the relative time was
                   invariably "just now" — no information for the reader. */}
+              {/* Early per-item result: decided while the launch was still
+                  running. One small hover icon, no extra text on screen. */}
+              {journeyDecision && journeyDecision.source === 'early' && (
+                <span
+                  className={cx('early-mark')}
+                  title={formatMessage(messages.benchEarlyMarkTitle)}
+                  aria-label={formatMessage(messages.benchEarlyMarkTitle)}
+                >
+                  i
+                </span>
+              )}
             </div>
             <div className={cx('story-reason')}>
               {formatMessage(messages[decisionStory.reasonKey], storyParams)}
