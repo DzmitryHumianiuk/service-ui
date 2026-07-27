@@ -798,6 +798,59 @@ export const messages = defineMessages({
     defaultMessage: 'This decision applies to this test only.',
   },
   // silent-no-signal empty state (gpos-silent-VERDICT copy, verbatim)
+  benchWaitCap: {
+    id: 'MakeDecisionModal.benchWaitCap',
+    defaultMessage: 'ANSWER ON ITS WAY',
+  },
+  benchWaitTitle: {
+    id: 'MakeDecisionModal.benchWaitTitle',
+    defaultMessage: 'The analyzer is still working on this one',
+  },
+  benchWaitTitleTip: {
+    id: 'MakeDecisionModal.benchWaitTitleTip',
+    defaultMessage:
+      'The analyzer answers fast from what it already knows. A failure it has not seen before takes a few more seconds to work out. This screen updates on its own.',
+  },
+  benchWaitBody: {
+    id: 'MakeDecisionModal.benchWaitBody',
+    defaultMessage:
+      'It read the error logs and is working out an answer for this failure. That takes a few seconds the first time a failure like this shows up. You do not need to reopen this window: it updates on its own when the answer lands.',
+  },
+  benchWaitNext: {
+    id: 'MakeDecisionModal.benchWaitNext',
+    defaultMessage: 'Wait a few seconds, or choose a defect type below and Apply.',
+  },
+  benchWaitNote: {
+    id: 'MakeDecisionModal.benchWaitNote',
+    defaultMessage: 'Your own decision always wins. The analyzer never overwrites it.',
+  },
+  benchNoHistoryCap: {
+    id: 'MakeDecisionModal.benchNoHistoryCap',
+    defaultMessage: 'NOTHING TO COMPARE WITH',
+  },
+  benchNoHistoryTitle: {
+    id: 'MakeDecisionModal.benchNoHistoryTitle',
+    defaultMessage: 'No past failure to match this one against',
+  },
+  benchNoHistoryTitleTip: {
+    id: 'MakeDecisionModal.benchNoHistoryTitleTip',
+    defaultMessage:
+      'The analyzer suggests a defect type by matching a failure against ones people already decided in this project. There are none like this yet.',
+  },
+  benchNoHistoryBody: {
+    id: 'MakeDecisionModal.benchNoHistoryBody',
+    defaultMessage:
+      'The analyzer read the error logs, but this project has no decided failure that looks like this one, so it has nothing to point at. This is normal in a new project or for a new kind of failure.',
+  },
+  benchNoHistoryNext: {
+    id: 'MakeDecisionModal.benchNoHistoryNext',
+    defaultMessage: 'Choose a defect type below, add a reason if it helps, then Apply.',
+  },
+  benchNoHistoryNote: {
+    id: 'MakeDecisionModal.benchNoHistoryNote',
+    defaultMessage:
+      'Your decision becomes the match for the next failure like this one, so the next run gets a suggestion.',
+  },
   benchSilentCap: {
     id: 'MakeDecisionModal.benchSilentCap',
     defaultMessage: 'NO ANALYZER SIGNAL',

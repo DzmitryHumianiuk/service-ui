@@ -239,6 +239,27 @@
       justify-content: center;
       flex: none;
     }
+    // Waiting for an answer that is on its way: the glyph breathes so the state
+    // reads as "in progress", not "nothing here". Motion is limited to the glyph;
+    // the text must stay still to be read.
+    &.waiting .sh-glyph {
+      animation: bench-sh-waiting 1.6s ease-in-out infinite;
+    }
+    @keyframes bench-sh-waiting {
+      0%,
+      100% {
+        opacity: 0.45;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      &.waiting .sh-glyph {
+        animation: none;
+        opacity: 0.7;
+      }
+    }
     .sh-main {
       max-width: 640px;
       display: flex;

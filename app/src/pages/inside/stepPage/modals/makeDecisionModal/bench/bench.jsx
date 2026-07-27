@@ -53,6 +53,7 @@ import {
   PROVENANCE,
   canLlmStillAnswer,
   deriveBanner,
+  emptyReplyVariant,
   getAnalyzerHealthApiUrl,
   deriveDecisionStory,
   getInspectorJourneyApiUrl,
@@ -138,6 +139,7 @@ export const Bench = ({
   suggestedItems,
   currentItem,
   emptyNoSignal,
+  emptyStillWorking,
   modalState,
   setModalState,
   activeTab,
@@ -1980,11 +1982,47 @@ export const Bench = ({
   const itemInspector = getInspectorJourneyUrlForItem(projectId, currentItem);
   const savedIssueType = currentItem?.issue?.issueType;
 
-  // silent-no-signal empty state (gpos-silent-VERDICT): a FAILED item with no ERROR
-  // logs, so no signature and no advisor content. One calm grey hero replaces the
-  // whole middle of the Bench; the identity header and verdict bar stay.
+  // Empty-reply state: name the cause that actually applies (see emptyReplyVariant).
+  // The analyzer's own signature is the authority on "did it get anything to read":
+  // it is what the analyzer built from the ERROR logs. errorLines is the fallback
+  // for the moment before the journey lands.
+  const emptyVariant = emptyReplyVariant({
+    journeyResolved,
+    stillWorking: emptyStillWorking,
+    analyzerReadLogs: !!journey?.signature || errorLines.length > 0,
+  });
+  const EMPTY_COPY = {
+    working: {
+      cap: messages.benchWaitCap,
+      title: messages.benchWaitTitle,
+      tip: messages.benchWaitTitleTip,
+      body: messages.benchWaitBody,
+      next: messages.benchWaitNext,
+      note: messages.benchWaitNote,
+    },
+    noHistory: {
+      cap: messages.benchNoHistoryCap,
+      title: messages.benchNoHistoryTitle,
+      tip: messages.benchNoHistoryTitleTip,
+      body: messages.benchNoHistoryBody,
+      next: messages.benchNoHistoryNext,
+      note: messages.benchNoHistoryNote,
+    },
+    noLogs: {
+      cap: messages.benchSilentCap,
+      title: messages.benchSilentTitle,
+      tip: messages.benchSilentTitleTip,
+      body: messages.benchSilentBody,
+      next: messages.benchSilentNext,
+      note: messages.benchSilentNote,
+    },
+  };
+  const emptyCopy = EMPTY_COPY[emptyVariant];
+  // One calm grey hero replaces the whole middle of the Bench; the identity header
+  // and the verdict bar (defect picker + Apply) stay, so a manual call is always
+  // one click away whichever cause applies.
   const silentHero = (
-    <div className={cx('band', 'band-grey', 'silent-hero')}>
+    <div className={cx('band', 'band-grey', 'silent-hero', { waiting: emptyVariant === 'working' })}>
       <span className={cx('sh-bar')} />
       <span className={cx('sh-glyph')} aria-hidden>
         <svg width="16" height="16" viewBox="0 0 16 16">
@@ -1992,16 +2030,16 @@ export const Bench = ({
         </svg>
       </span>
       <div className={cx('sh-main')}>
-        <div className={cx('sh-cap')}>{formatMessage(messages.benchSilentCap)}</div>
+        <div className={cx('sh-cap')}>{formatMessage(emptyCopy.cap)}</div>
         <div className={cx('sh-title')}>
-          {formatMessage(messages.benchSilentTitle)}
-          <span className={cx('sh-info', 'tip')} title={formatMessage(messages.benchSilentTitleTip)}>
+          {formatMessage(emptyCopy.title)}
+          <span className={cx('sh-info', 'tip')} title={formatMessage(emptyCopy.tip)}>
             ?
           </span>
         </div>
-        <div className={cx('sh-body')}>{formatMessage(messages.benchSilentBody)}</div>
-        <div className={cx('sh-next')}>{formatMessage(messages.benchSilentNext)}</div>
-        <div className={cx('sh-note')}>{formatMessage(messages.benchSilentNote)}</div>
+        <div className={cx('sh-body')}>{formatMessage(emptyCopy.body)}</div>
+        <div className={cx('sh-next')}>{formatMessage(emptyCopy.next)}</div>
+        <div className={cx('sh-note')}>{formatMessage(emptyCopy.note)}</div>
       </div>
     </div>
   );
@@ -2544,6 +2582,7 @@ Bench.propTypes = {
   suggestedItems: PropTypes.array,
   currentItem: PropTypes.object,
   emptyNoSignal: PropTypes.bool,
+  emptyStillWorking: PropTypes.bool,
   modalState: PropTypes.object.isRequired,
   setModalState: PropTypes.func.isRequired,
   activeTab: PropTypes.string.isRequired,
@@ -2560,6 +2599,7 @@ Bench.defaultProps = {
   suggestedItems: [],
   currentItem: {},
   emptyNoSignal: false,
+  emptyStillWorking: false,
   modalHasChanges: false,
   scopeSection: null,
   scopeRef: null,

@@ -225,6 +225,36 @@ export const canLlmStillAnswer = (healthPayload) => {
 };
 
 // ---------------------------------------------------------------------------
+// Empty analyzer reply: which of the three causes to tell the reader about.
+//
+// An empty reply used to be reported as "no ERROR logs to analyze" in every case.
+// That is right for one cause and wrong for the two common ones. The analyzer
+// answers the suggest call from what it has already worked out, so the first look
+// at a fresh failure gets an empty reply while the logs are there and the answer
+// is seconds away; and a project with no decided failures like this one has
+// nothing to point at however good the logs are. Naming the wrong cause sends
+// people looking for missing logs that are not missing.
+//
+//   'working'   - keep quiet about causes: the analyzer read the logs and is still
+//                 working, or we do not know yet (journey not resolved). Saying
+//                 "still working" is the only claim safe to make before the facts
+//                 are in, and it is the one that is true most of the time.
+//   'noHistory' - the analyzer read the logs, nothing left to wait for, but this
+//                 project has no decided failure to match against.
+//   'noLogs'    - the real silent case: no ERROR logs, so no signature at all.
+// ---------------------------------------------------------------------------
+export const EMPTY_REPLY_WORKING = 'working';
+export const EMPTY_REPLY_NO_HISTORY = 'noHistory';
+export const EMPTY_REPLY_NO_LOGS = 'noLogs';
+
+export const emptyReplyVariant = ({ journeyResolved, stillWorking, analyzerReadLogs }) => {
+  if (!journeyResolved || stillWorking) {
+    return EMPTY_REPLY_WORKING;
+  }
+  return analyzerReadLogs ? EMPTY_REPLY_NO_HISTORY : EMPTY_REPLY_NO_LOGS;
+};
+
+// ---------------------------------------------------------------------------
 // Launch context (burst) trigger. The analyzer computes the burst signal
 // (grouping.dominant); si_prior is only a fallback for payloads where the
 // boolean is absent. The UI never re-derives thresholds beyond this constant

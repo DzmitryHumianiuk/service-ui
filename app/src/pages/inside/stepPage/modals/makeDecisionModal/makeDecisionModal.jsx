@@ -58,7 +58,11 @@ import {
 } from './constants';
 import { ExecutionSection } from './executionSection';
 import { Bench } from './bench';
-import { isRubricHypothesis } from './analyzerSuggestionMeta';
+import {
+  canLlmStillAnswer,
+  getAnalyzerHealthApiUrl,
+  isRubricHypothesis,
+} from './analyzerSuggestionMeta';
 import styles from './makeDecisionModal.scss';
 
 const cx = classNames.bind(styles);
@@ -127,6 +131,9 @@ const MakeDecision = ({ data }) => {
   // eligible decision) we render the Bench shell with a loader, NOT the stock tabs,
   // so the user never sees the old Make Decision flash before the Bench appears.
   const [mlResolved, setMlResolved] = useState(false);
+  // True while the first reply came back empty and the analyzer says it can still
+  // answer, so one more ask is on its way. Drives the Bench empty-state wording.
+  const [suggestStillWorking, setSuggestStillWorking] = useState(false);
 
   // The Bench replaces the stock execution/suggestions area when the analyzer
   // actually spoke (non-empty suggest reply).
@@ -171,27 +178,85 @@ const MakeDecision = ({ data }) => {
   }, [modalState]);
 
   useEffect(() => {
-    if (isMLSuggestionsAvailable) {
+    if (!isMLSuggestionsAvailable) {
+      setMlResolved(true);
+      return undefined;
+    }
+    let cancelled = false;
+    const timers = [];
+    const url =
+      clusterIds.length === 1
+        ? URLS.MLSuggestionsByCluster(activeProject, clusterIds[0])
+        : URLS.MLSuggestions(activeProject, itemData.id);
+    // An empty reply does NOT mean the analyzer has nothing to say. It answers the
+    // suggest call from what it has already worked out; for a failure it has not
+    // seen before the answer is still being computed when the reply goes out, and
+    // it lands seconds later. Asking once and settling on "nothing" left a reader
+    // looking at an empty screen for an answer that already existed by then, and
+    // only reopening the window would show it.
+    //
+    // So on an empty reply: ask the analyzer whether it can still answer at all
+    // (same health question the explanation wait state asks, for the same reason),
+    // and if it can, ask again on a fixed, short schedule. Measured on a cold
+    // project, a first answer for a never-seen failure lands about 25 seconds after
+    // the reply goes out, so a single 20-second retry would still be too early. Two
+    // asks bracket it: one early for the quick cases, one past the measured mark.
+    // The schedule is fixed and then it stops. This is not a poll, and it never
+    // runs at all once the analyzer has answered.
+    const RETRY_DELAYS_MS = [15000, 25000];
+    const askOnce = (attempt) => {
       setLoadingMLSuggest(true);
-      const url =
-        clusterIds.length === 1
-          ? URLS.MLSuggestionsByCluster(activeProject, clusterIds[0])
-          : URLS.MLSuggestions(activeProject, itemData.id);
       fetch(url)
         .then((resp) => {
-          if (resp.length !== 0) {
-            setModalState({ suggestedItems: resp });
+          if (cancelled) {
+            return;
           }
           setLoadingMLSuggest(false);
           setMlResolved(true);
+          if (resp.length !== 0) {
+            setSuggestStillWorking(false);
+            setModalState({ suggestedItems: resp });
+            return;
+          }
+          if (attempt >= RETRY_DELAYS_MS.length) {
+            // Asked as often as we are going to: this is a real empty reply.
+            setSuggestStillWorking(false);
+            return;
+          }
+          window
+            .fetch(getAnalyzerHealthApiUrl())
+            .then((r) => (r.ok ? r.json() : null))
+            .then((payload) => {
+              if (cancelled) {
+                return;
+              }
+              if (!canLlmStillAnswer(payload)) {
+                setSuggestStillWorking(false);
+                return;
+              }
+              setSuggestStillWorking(true);
+              timers.push(
+                window.setTimeout(
+                  () => !cancelled && askOnce(attempt + 1),
+                  RETRY_DELAYS_MS[attempt],
+                ),
+              );
+            })
+            .catch(() => !cancelled && setSuggestStillWorking(false));
         })
         .catch(() => {
-          setLoadingMLSuggest(false);
-          setMlResolved(true);
+          if (!cancelled) {
+            setLoadingMLSuggest(false);
+            setMlResolved(true);
+            setSuggestStillWorking(false);
+          }
         });
-    } else {
-      setMlResolved(true);
-    }
+    };
+    askOnce(0);
+    return () => {
+      cancelled = true;
+      timers.forEach((t) => window.clearTimeout(t));
+    };
   }, []);
 
   const prepareDataToSend = ({ isIssueAction } = {}) => {
@@ -616,6 +681,7 @@ const MakeDecision = ({ data }) => {
           suggestedItems={modalState.suggestedItems}
           currentItem={modalState.currentTestItems[0]}
           emptyNoSignal={benchEmpty}
+          emptyStillWorking={suggestStillWorking}
           modalState={modalState}
           setModalState={setModalState}
           activeTab={activeTab}

@@ -14,7 +14,14 @@
  *  limitations under the License.
  */
 
-import { isDecisionFresh, normalizeLine } from './analyzerSuggestionMeta';
+import {
+  EMPTY_REPLY_NO_HISTORY,
+  EMPTY_REPLY_NO_LOGS,
+  EMPTY_REPLY_WORKING,
+  emptyReplyVariant,
+  isDecisionFresh,
+  normalizeLine,
+} from './analyzerSuggestionMeta';
 
 // The explainer quotes the analyzer's MASKED signature, while the item's log
 // lines are raw. Both go through normalizeLine before the quote gate compares
@@ -86,5 +93,31 @@ describe('isDecisionFresh with a masked quote', () => {
 
   it('skips grounding when the explainer carried no quotes at all', () => {
     expect(isDecisionFresh(decision, null, null)).toBe(true);
+  });
+});
+
+describe('emptyReplyVariant', () => {
+  it('says "still working" before the journey has resolved', () => {
+    expect(
+      emptyReplyVariant({ journeyResolved: false, stillWorking: false, analyzerReadLogs: false }),
+    ).toBe(EMPTY_REPLY_WORKING);
+  });
+
+  it('says "still working" while another ask is on its way', () => {
+    expect(
+      emptyReplyVariant({ journeyResolved: true, stillWorking: true, analyzerReadLogs: true }),
+    ).toBe(EMPTY_REPLY_WORKING);
+  });
+
+  it('never blames missing logs when the analyzer did read logs', () => {
+    expect(
+      emptyReplyVariant({ journeyResolved: true, stillWorking: false, analyzerReadLogs: true }),
+    ).toBe(EMPTY_REPLY_NO_HISTORY);
+  });
+
+  it('keeps the silent case for an item with no error logs at all', () => {
+    expect(
+      emptyReplyVariant({ journeyResolved: true, stillWorking: false, analyzerReadLogs: false }),
+    ).toBe(EMPTY_REPLY_NO_LOGS);
   });
 });
