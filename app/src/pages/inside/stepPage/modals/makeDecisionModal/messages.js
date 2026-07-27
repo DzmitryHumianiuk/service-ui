@@ -713,6 +713,18 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchNotConfirmed',
     defaultMessage: 'not confirmed',
   },
+  benchTagHypothesis: {
+    id: 'MakeDecisionModal.benchTagHypothesis',
+    defaultMessage: 'hypothesis',
+  },
+  benchHypothesisNote: {
+    id: 'MakeDecisionModal.benchHypothesisNote',
+    defaultMessage: 'No confident match yet. This is an early guess from rules. Check it before you decide.',
+  },
+  benchHypothesisRoleOff: {
+    id: 'MakeDecisionModal.benchHypothesisRoleOff',
+    defaultMessage: 'The AI guess feature is turned off for this project, so this guess will not update.',
+  },
   benchUseThisGuess: {
     id: 'MakeDecisionModal.benchUseThisGuess',
     defaultMessage: 'Use this guess',

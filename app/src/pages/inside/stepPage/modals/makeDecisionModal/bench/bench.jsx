@@ -677,6 +677,11 @@ export const Bench = ({
   // paragraph is gated separately by the reoriented isDecisionFresh.
   const journeyDecision = journey?.decision || null;
   const hasDecisionRecord = !!journeyDecision;
+  // Cold-start hypothesis kept on the journey record. The live suggest reply
+  // loses the rubric row as soon as newer classical rows displace it (or the
+  // guess feature is off), while the journey still remembers the guess; this is
+  // the only source for the AI card in that case.
+  const journeyRubric = journeyDecision?.rubric_hypothesis || null;
   const decisionHasExplanation = !!(
     journeyDecision &&
     typeof journeyDecision.explanation === 'string' &&
@@ -744,9 +749,16 @@ export const Bench = ({
   ]);
   const explainerEvent =
     (journey?.llm?.events || []).find((ev) => ev && ev.role === 'explainer') || null;
-  const quotedLines = (explainerEvent?.output?.quoted_lines || []).filter(
-    (q) => typeof q === 'string' && q.trim().length,
-  );
+  // Analyzer images after the quote split write quoted_log_lines (log quotes
+  // only); cached outputs up to 90 days old still carry the single quoted_lines
+  // field. Read both. quoted_fact_values is never matched against the log: fact
+  // values are not log lines, and treating them as such is what used to poison
+  // the grounding check.
+  const quotedLines = (
+    explainerEvent?.output?.quoted_log_lines ||
+    explainerEvent?.output?.quoted_lines ||
+    []
+  ).filter((q) => typeof q === 'string' && q.trim().length);
   const normLog = useMemo(() => errorLines.map((l) => normalizeLine(l.text)), [
     currentItem?.logs,
   ]);
@@ -1283,6 +1295,43 @@ export const Bench = ({
           </div>
           <div className={cx('strength')}>{formatMessage(messages.benchAiGuessPct, { pct })}</div>
           {armedCard === 'ai' && armedNote(rubricRow.issueType)}
+        </div>
+      );
+    }
+    // The hypothesis the journey remembers when the live reply has no rubric row
+    // (newer classical rows displaced it, or the guess feature is off). Adoptable
+    // exactly like a live rubric card; when the feature is off for this project,
+    // the card says so instead of pretending the guess is current.
+    if (journeyRubric && journeyRubric.predicted_label) {
+      const pct = Math.round((journeyRubric.confidence || 0) * 100);
+      const hypoRow = {
+        issueType: journeyRubric.predicted_label,
+        explanation: journeyRubric.explanation,
+      };
+      return (
+        <div
+          className={cx('check', 'rubric', 'actionable', { armed: armedCard === 'ai' })}
+          role="button"
+          tabIndex={0}
+          onClick={armOnCardClick(() => adoptRubric(hypoRow))}
+        >
+          <span className={cx('edge')} />
+          <InspectorLink
+            corner
+            href={getInspectorJourneyUrlForItem(projectId, currentItem)}
+            label={formatMessage(messages.benchWhy)}
+          />
+          <div className={cx('method')}>
+            <span className={cx('gl')}>✦</span> {formatMessage(messages.benchCheckAi)}
+            <span className={cx('tag-nc')}>{formatMessage(messages.benchTagHypothesis)}</span>
+          </div>
+          <div className={cx('role')}>{formatMessage(messages.benchHypothesisNote)}</div>
+          <div className={cx('verd-pill')}>{renderPill(journeyRubric.predicted_label)}</div>
+          <div className={cx('strength')}>{formatMessage(messages.benchAiGuessPct, { pct })}</div>
+          {journeyRubric.source_role_enabled === false && (
+            <div className={cx('role')}>{formatMessage(messages.benchHypothesisRoleOff)}</div>
+          )}
+          {armedCard === 'ai' && armedNote(journeyRubric.predicted_label)}
         </div>
       );
     }
