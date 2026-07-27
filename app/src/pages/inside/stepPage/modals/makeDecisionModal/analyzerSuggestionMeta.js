@@ -704,6 +704,38 @@ export const deriveBanner = ({ decisionOutcome, offers } = {}) => {
 // never "alike" (verdict MS7 / migration item 5). Plain below-line rows keep "alike".
 export const isDeclineRow = (suggestRs) => parseExplKind(suggestRs) === 'decline';
 
+/*
+ * The AI card has two sources before this one, and both go missing in the same
+ * common situation. The live reply carries a rubric row only while nothing
+ * vouched outranks it, so the first human label in a project removes it. The
+ * journey fills `rubric_hypothesis` only when a CLASSICAL row displaced the
+ * guess, so it stays empty while the guess is itself the decision on record.
+ * The result was a modal printing the guess in its story and denying it in its
+ * card. This reads the third case: the record is the guess.
+ *
+ * Returns the same shape the card renders from, or null when the record is a
+ * classical decision (which must never be dressed up as an AI guess) or when
+ * one of the two earlier sources already has it.
+ */
+export const deriveJourneyOwnGuess = (journeyDecision, journeyRubric) => {
+  if (!journeyDecision || typeof journeyDecision !== 'object' || journeyRubric) {
+    return null;
+  }
+  const method = typeof journeyDecision.method === 'string' ? journeyDecision.method : '';
+  const isGuess =
+    method === 'coldstart' ||
+    method === 'rule_cold' ||
+    journeyDecision.coldstart_provisional === true;
+  if (!isGuess || !journeyDecision.predicted_label) {
+    return null;
+  }
+  return {
+    issueType: journeyDecision.predicted_label,
+    explanation: journeyDecision.explanation,
+    confidence: typeof journeyDecision.confidence === 'number' ? journeyDecision.confidence : null,
+  };
+};
+
 // ---------------------------------------------------------------------------
 // Does the model stand behind this offer?
 //

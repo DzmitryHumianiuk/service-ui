@@ -56,6 +56,7 @@ import {
   canLlmStillAnswer,
   classicalVerdict,
   deriveBanner,
+  deriveJourneyOwnGuess,
   deriveMismatchClauses,
   deriveOfferBacking,
   emptyReplyVariant,
@@ -692,6 +693,14 @@ export const Bench = ({
   // guess feature is off), while the journey still remembers the guess; this is
   // the only source for the AI card in that case.
   const journeyRubric = journeyDecision?.rubric_hypothesis || null;
+  // Third source for the AI card: the decision on record IS the guess. Neither
+  // source above carries it then, because the live reply drops its rubric row as
+  // soon as a labelled neighbour outranks it, and rubric_hypothesis is only
+  // filled when a classical row displaced the guess. Without this the modal
+  // printed the guess in the story at the top ("Best answer: Product Bug at
+  // confidence 0.65") and denied it in the card below ("No AI guess for this
+  // failure").
+  const journeyOwnGuess = deriveJourneyOwnGuess(journeyDecision, journeyRubric);
   const decisionHasExplanation = !!(
     journeyDecision &&
     typeof journeyDecision.explanation === 'string' &&
@@ -1466,6 +1475,39 @@ export const Bench = ({
             <div className={cx('role')}>{formatMessage(messages.benchHypothesisRoleOff)}</div>
           )}
           {armedCard === 'ai' && armedNote(journeyRubric.predicted_label)}
+        </div>
+      );
+    }
+    // The record itself is the guess. Same card as a live rubric row, because
+    // that is what it is: the analyzer's current answer for this failure, just
+    // not carried on the live reply.
+    if (journeyOwnGuess) {
+      const pct = Math.round((journeyOwnGuess.confidence || 0) * 100);
+      return (
+        <div
+          className={cx('check', 'rubric', 'actionable', { armed: armedCard === 'ai' })}
+          role="button"
+          tabIndex={0}
+          onClick={armOnCardClick(() => adoptRubric(journeyOwnGuess))}
+        >
+          <span className={cx('edge')} />
+          <InspectorLink
+            corner
+            href={getInspectorJourneyUrlForItem(projectId, currentItem)}
+            label={formatMessage(messages.benchWhy)}
+          />
+          <div className={cx('method')}>
+            <span className={cx('gl')}>✦</span> {formatMessage(messages.benchCheckAi)}
+            <span className={cx('tag-nc')}>{formatMessage(messages.benchNotConfirmed)}</span>
+          </div>
+          <div className={cx('role')}>{formatMessage(messages.benchCheckAiRole)}</div>
+          <div className={cx('verd-pill')}>{renderPill(journeyOwnGuess.issueType)}</div>
+          {pct > 0 && (
+            <div className={cx('strength')}>
+              {formatMessage(messages.benchAiGuessPct, { pct })}
+            </div>
+          )}
+          {armedCard === 'ai' && armedNote(journeyOwnGuess.issueType)}
         </div>
       );
     }

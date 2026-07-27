@@ -22,6 +22,7 @@ import {
   MISMATCH,
   classicalVerdict,
   deriveBanner,
+  deriveJourneyOwnGuess,
   deriveMismatchClauses,
   deriveOfferBacking,
   emptyReplyVariant,
@@ -395,5 +396,48 @@ describe('deriveBanner with an offer the model did not back', () => {
         offers: { ...offers, topGroup: 'PRODUCT_BUG' },
       }).id,
     ).toBe('B1');
+  });
+});
+
+// The modal printed the guess in its story and denied it in its card: the live
+// reply loses the rubric row once a human labels a neighbour, and the journey
+// only fills rubric_hypothesis when a classical row displaced the guess.
+describe('deriveJourneyOwnGuess', () => {
+  const record = {
+    method: 'coldstart',
+    predicted_label: 'pb001',
+    confidence: 0.65,
+    explanation: 'Assertion failure in test code with expected vs actual mismatch.',
+    coldstart_provisional: true,
+  };
+
+  it('reads the guess off the record when nothing else carries it', () => {
+    expect(deriveJourneyOwnGuess(record, null)).toEqual({
+      issueType: 'pb001',
+      explanation: record.explanation,
+      confidence: 0.65,
+    });
+  });
+
+  it('defers to the remembered hypothesis when that source has it', () => {
+    expect(deriveJourneyOwnGuess(record, { predicted_label: 'si001' })).toBeNull();
+  });
+
+  it('never dresses a classical decision up as an AI guess', () => {
+    expect(
+      deriveJourneyOwnGuess({ method: 'gbm', predicted_label: 'pb001', confidence: 0.8 }, null),
+    ).toBeNull();
+  });
+
+  it('accepts the older rule_cold method name', () => {
+    expect(
+      deriveJourneyOwnGuess({ method: 'rule_cold', predicted_label: 'si001', confidence: 0.6 }, null)
+        .issueType,
+    ).toBe('si001');
+  });
+
+  it('has nothing to show without a record or without a label', () => {
+    expect(deriveJourneyOwnGuess(null, null)).toBeNull();
+    expect(deriveJourneyOwnGuess({ method: 'coldstart' }, null)).toBeNull();
   });
 });
