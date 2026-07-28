@@ -310,6 +310,16 @@ const MakeDecision = ({ data }) => {
         ...newIssue,
         autoAnalyzed: false,
       };
+      // Every item in this payload needs a defect type; the server rejects the
+      // WHOLE request when one is missing. Two things conspire to drop it: on the
+      // manual tab newIssue is only the fields that DIFFER from the current item's
+      // issue, and a group member joins selectedItems carrying an empty issue. So
+      // applying the type the current item already has left every group member
+      // with no type at all and the request failed as a unit. The armed verdict is
+      // the authority for the whole payload, with the item's own type as fallback.
+      if (!merged.issueType) {
+        merged.issueType = issue.issueType || (item.issue && item.issue.issueType);
+      }
       // Group-override members (verdict 9.2): keep KB provenance honest by
       // appending a short trailing note to the outgoing comment so a later reader
       // can tell a fanned-out decision from an individually triaged one. The full
