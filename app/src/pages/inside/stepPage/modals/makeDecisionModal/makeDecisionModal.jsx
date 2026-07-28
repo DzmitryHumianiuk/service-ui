@@ -320,6 +320,14 @@ const MakeDecision = ({ data }) => {
       if (!merged.issueType) {
         merged.issueType = issue.issueType || (item.issue && item.issue.issueType);
       }
+      // The comment is dropped by the same delta for the same reason, and the
+      // modal promises to save it on every test the decision covers. A member
+      // with no comment key at all never had one of its own, so nothing is being
+      // overwritten here; an empty string is a real value the human chose and is
+      // left alone.
+      if (merged.comment === undefined && issue.comment) {
+        merged.comment = issue.comment;
+      }
       // Group-override members (verdict 9.2): keep KB provenance honest by
       // appending a short trailing note to the outgoing comment so a later reader
       // can tell a fanned-out decision from an individually triaged one. The full
