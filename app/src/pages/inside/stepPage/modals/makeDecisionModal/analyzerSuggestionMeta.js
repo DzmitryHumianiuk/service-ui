@@ -705,6 +705,54 @@ export const deriveBanner = ({ decisionOutcome, offers } = {}) => {
 export const isDeclineRow = (suggestRs) => parseExplKind(suggestRs) === 'decline';
 
 /*
+ * Ground one already-normalised quote against the item's already-normalised log
+ * lines. Returns the index of the line the quote starts in, or -1.
+ *
+ * A quote can legitimately cover several log lines: the explainer quotes the
+ * analyzer's signature, which joins the lines, while the modal holds them split.
+ * Checking line by line could never match such a quote, so the gate closed and
+ * hid the explanation on every failure whose message spans more than one line,
+ * which is most stack traces.
+ *
+ * The second pass compares against the joined log rather than accepting a quote
+ * that merely CONTAINS a log line. That distinction is the whole safety story:
+ * joined still requires every character of the quote to appear in the real log,
+ * in order, so an invented quote fails exactly as before. The looser "quote
+ * contains line" test would pass any hallucination that happened to embed one
+ * short real line.
+ */
+export const groundQuote = (normQuote, normLogLines) => {
+  const lines = normLogLines || [];
+  if (!normQuote) {
+    return -1;
+  }
+  const direct = lines.findIndex((nl) => nl === normQuote || nl.includes(normQuote));
+  if (direct >= 0) {
+    return direct;
+  }
+  if (!lines.join(' ').includes(normQuote)) {
+    return -1;
+  }
+  // Matched across the split: point at the first line the quote covers, so the
+  // highlight still lands somewhere real.
+  const start = lines.findIndex((nl) => nl.length > 0 && normQuote.includes(nl));
+  return start >= 0 ? start : 0;
+};
+
+// True when the explanation on the decision record was written by the cold-start
+// rubric rather than by the explainer. The explainer's quotes describe its OWN
+// text, so judging a rubric explanation with them is judging one answer by
+// another answer's evidence.
+export const explanationIsRubric = (journeyDecision) => {
+  if (!journeyDecision || typeof journeyDecision !== 'object') {
+    return false;
+  }
+  const modelVer = typeof journeyDecision.model_ver === 'string' ? journeyDecision.model_ver : '';
+  const method = typeof journeyDecision.method === 'string' ? journeyDecision.method : '';
+  return modelVer.startsWith('rubric+') || method === 'coldstart' || method === 'rule_cold';
+};
+
+/*
  * The AI card has two sources before this one, and both go missing in the same
  * common situation. The live reply carries a rubric row only while nothing
  * vouched outranks it, so the first human label in a project removes it. The

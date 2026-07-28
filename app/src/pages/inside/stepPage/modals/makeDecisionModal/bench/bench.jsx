@@ -61,6 +61,8 @@ import {
   deriveOfferBacking,
   emptyReplyVariant,
   evidenceBaseCount,
+  explanationIsRubric,
+  groundQuote,
   offersRestOnSimilarityAlone,
   parseFeatures,
   getAnalyzerHealthApiUrl,
@@ -781,14 +783,22 @@ export const Bench = ({
   const normLog = useMemo(() => errorLines.map((l) => normalizeLine(l.text)), [
     currentItem?.logs,
   ]);
-  const quoteInfos = quotedLines.map((q) => {
-    const nq = normalizeLine(q);
-    const idx = normLog.findIndex((nl) => nl === nq || (nq.length > 0 && nl.includes(nq)));
-    return { text: q, idx };
-  });
+  const quoteInfos = quotedLines.map((q) => ({
+    text: q,
+    idx: groundQuote(normalizeLine(q), normLog),
+  }));
   // Quote grounding for the freshness gate: true = a quote matched this item's own
   // log, false = quotes exist and none matched (fail closed), null = no quotes.
-  const quoteMatched = quoteInfos.length ? quoteInfos.some((q) => q.idx >= 0) : null;
+  //
+  // The explainer's quotes describe the explainer's own text. When the record
+  // carries the cold-start rubric's explanation instead, those quotes belong to a
+  // different answer and cannot judge this one: applying them anyway hid a sound
+  // explanation because the quotes never mentioned it. Null skips the check
+  // rather than passing a verdict the evidence cannot support.
+  const rubricExplanation = explanationIsRubric(journeyDecision);
+  const quoteMatched = rubricExplanation || !quoteInfos.length
+    ? null
+    : quoteInfos.some((q) => q.idx >= 0);
 
   // Group typeRef -> its display name (the {defect} in the story/banner). The base
   // subtype (locator ...001) carries the canonical group name; fall back to first.

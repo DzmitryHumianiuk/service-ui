@@ -27,6 +27,8 @@ import {
   deriveOfferBacking,
   emptyReplyVariant,
   evidenceBaseCount,
+  explanationIsRubric,
+  groundQuote,
   isDecisionFresh,
   normalizeLine,
   offersRestOnSimilarityAlone,
@@ -439,5 +441,55 @@ describe('deriveJourneyOwnGuess', () => {
   it('has nothing to show without a record or without a label', () => {
     expect(deriveJourneyOwnGuess(null, null)).toBeNull();
     expect(deriveJourneyOwnGuess({ method: 'coldstart' }, null)).toBeNull();
+  });
+});
+
+// The real item 6239 case: the explainer quotes the analyzer's signature, which
+// joins the log lines, while the modal holds them split. Line-by-line matching
+// could never succeed, the gate failed closed, and the explanation vanished.
+describe('groundQuote', () => {
+  const log = [
+    'Xunit.Sdk.EqualException: Assert.Equal() Failure: Values differ',
+    'Expected: <NUM>',
+    'Actual: <NUM>',
+  ];
+
+  it('matches a quote that covers several log lines, and points at the first', () => {
+    const quote =
+      'Xunit.Sdk.EqualException: Assert.Equal() Failure: Values differ Expected: <NUM> Actual: <NUM>';
+    expect(groundQuote(quote, log)).toBe(0);
+  });
+
+  it('still matches a quote that sits inside one line', () => {
+    expect(groundQuote('Expected: <NUM>', log)).toBe(1);
+  });
+
+  it('rejects an invented quote outright', () => {
+    expect(groundQuote('NullReferenceException at Checkout.Pay', log)).toBe(-1);
+  });
+
+  it('rejects a quote that embeds a real line inside invented text', () => {
+    // This is what a plain two-way containment check would have let through.
+    expect(groundQuote('Expected: <NUM> and the database was dropped', log)).toBe(-1);
+  });
+
+  it('has nothing to ground when the quote is empty', () => {
+    expect(groundQuote('', log)).toBe(-1);
+  });
+});
+
+describe('explanationIsRubric', () => {
+  it('spots the rubric by its model version', () => {
+    expect(explanationIsRubric({ model_ver: 'rubric+qwen3:4b-q4_K_M' })).toBe(true);
+  });
+
+  it('spots it by method for a record without a model version', () => {
+    expect(explanationIsRubric({ method: 'coldstart' })).toBe(true);
+    expect(explanationIsRubric({ method: 'rule_cold' })).toBe(true);
+  });
+
+  it('leaves a classical explanation to the explainer quotes', () => {
+    expect(explanationIsRubric({ method: 'gbm', model_ver: 'gbm-20260721T175504Z' })).toBe(false);
+    expect(explanationIsRubric(null)).toBe(false);
   });
 });
