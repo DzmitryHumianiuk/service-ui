@@ -1031,6 +1031,12 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      // The "why?" link is pinned to the card corner and is out of flow, so this
+      // row has to keep clear of it on its own. Reserving its width stops a chip
+      // from sliding under the link, and wrapping lets a second chip drop to its
+      // own line instead of being pushed into it.
+      flex-wrap: wrap;
+      padding-right: 62px;
       font-size: 13.5px;
       font-weight: 700;
       color: var(--rp-almost-black);
