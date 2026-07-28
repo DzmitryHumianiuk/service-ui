@@ -753,6 +753,42 @@ export const explanationIsRubric = (journeyDecision) => {
 };
 
 /*
+ * The explanation Act 1 shows, plus the row it belongs to.
+ *
+ * "What the analyzer did" is an account of the analyzer's own decision, so the
+ * text under it has to be the one written about that decision. The record on the
+ * journey is simply the newest row, and that can be the cold-start guess, whose
+ * explanation answers a different question: why this test failed, not why the
+ * analyzer acted as it did. Printing it there put the guess in the story, put it
+ * again in the comment when the guess is adopted, and left the account of the
+ * decision visible only in the Inspector.
+ *
+ * There is already a rule for this: outcome O8 drops a cold-start explanation
+ * from Act 1 because it belongs to the AI guess card. It is keyed on the
+ * confidence band, so a guess that lands in the suggest band slips past it. This
+ * keys on what the row IS instead.
+ *
+ * Returns the classical row's explanation when the record is a guess, the
+ * record's own when it is not, and an empty string when neither exists. `row` is
+ * the record that text was written about, so the freshness gate judges the text
+ * it is actually showing.
+ */
+export const actOneExplanation = (journeyDecision) => {
+  const empty = { text: '', row: null };
+  if (!journeyDecision || typeof journeyDecision !== 'object') {
+    return empty;
+  }
+  const own = typeof journeyDecision.explanation === 'string' ? journeyDecision.explanation.trim() : '';
+  if (!explanationIsRubric(journeyDecision)) {
+    return own ? { text: own, row: journeyDecision } : empty;
+  }
+  const classical = journeyDecision.classical;
+  const text =
+    classical && typeof classical.explanation === 'string' ? classical.explanation.trim() : '';
+  return text ? { text, row: classical } : empty;
+};
+
+/*
  * The AI card has two sources before this one, and both go missing in the same
  * common situation. The live reply carries a rubric row only while nothing
  * vouched outranks it, so the first human label in a project removes it. The

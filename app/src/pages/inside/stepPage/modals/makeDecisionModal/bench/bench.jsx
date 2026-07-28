@@ -61,7 +61,7 @@ import {
   deriveOfferBacking,
   emptyReplyVariant,
   evidenceBaseCount,
-  explanationIsRubric,
+  actOneExplanation,
   groundQuote,
   offersRestOnSimilarityAlone,
   parseFeatures,
@@ -789,16 +789,9 @@ export const Bench = ({
   }));
   // Quote grounding for the freshness gate: true = a quote matched this item's own
   // log, false = quotes exist and none matched (fail closed), null = no quotes.
-  //
-  // The explainer's quotes describe the explainer's own text. When the record
-  // carries the cold-start rubric's explanation instead, those quotes belong to a
-  // different answer and cannot judge this one: applying them anyway hid a sound
-  // explanation because the quotes never mentioned it. Null skips the check
-  // rather than passing a verdict the evidence cannot support.
-  const rubricExplanation = explanationIsRubric(journeyDecision);
-  const quoteMatched = rubricExplanation || !quoteInfos.length
-    ? null
-    : quoteInfos.some((q) => q.idx >= 0);
+  // Act 1 now shows the explainer's own text (see actOneExplanation), so the
+  // explainer's quotes are evidence for exactly the paragraph on screen.
+  const quoteMatched = quoteInfos.length ? quoteInfos.some((q) => q.idx >= 0) : null;
 
   // Group typeRef -> its display name (the {defect} in the story/banner). The base
   // subtype (locator ...001) carries the canonical group name; fall back to first.
@@ -825,18 +818,22 @@ export const Bench = ({
   const liveTopRow = autoRow || topSuggest || belowRows[0] || null;
   const liveTopGroupRef = liveTopRow ? groupRef(liveTopRow.issueType) : null;
 
-  // AI paragraph gate (rows 1-3 always render): story present, carries an
-  // explanation, and passes the reoriented freshness check. O8 is excluded upstream
-  // (deriveDecisionStory sets hasAi false, its explanation is the rubric card's why).
+  // The paragraph under "What the analyzer did" is the analyzer's account of its
+  // OWN decision, so it comes from the row that decision was written about, not
+  // from whichever row happens to be newest. A cold-start guess explains why the
+  // test failed, which belongs to the AI guess card and to the comment when that
+  // guess is adopted; putting it here told the wrong story and told it twice.
+  const actOne = actOneExplanation(journeyDecision);
+
+  // AI paragraph gate (rows 1-3 always render): text present and it passes the
+  // reoriented freshness check, judged against the row that text belongs to.
   const aiFresh =
-    !!decisionStory &&
-    decisionStory.hasAi &&
-    isDecisionFresh(journeyDecision, liveTopGroupRef, quoteMatched);
+    !!decisionStory && !!actOne.text && isDecisionFresh(actOne.row, liveTopGroupRef, quoteMatched);
 
   // Measure the clamped AI paragraph so "Show more" appears only when the text
   // truly overflows the 3-line clamp. Measure only while collapsed (open unclamps,
   // so scrollHeight == clientHeight there); keep the last measured value when open.
-  const aiText = decisionStory && decisionStory.aiText;
+  const aiText = actOne.text;
   useEffect(() => {
     if (!aiFresh || storyAiOpen) {
       return;
@@ -2455,7 +2452,7 @@ export const Bench = ({
                   </span>
                 </div>
                 <div className={cx('ai-body')} ref={aiBodyRef}>
-                  {renderRichText(decisionStory.aiText)}
+                  {renderRichText(aiText)}
                 </div>
                 {/* Show more only when the clamped text actually overflows 3 lines
                     (a short explanation must not carry a dead toggle). */}

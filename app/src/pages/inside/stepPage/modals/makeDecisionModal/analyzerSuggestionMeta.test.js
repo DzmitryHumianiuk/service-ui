@@ -20,6 +20,7 @@ import {
   EMPTY_REPLY_NO_LOGS,
   EMPTY_REPLY_WORKING,
   MISMATCH,
+  actOneExplanation,
   classicalVerdict,
   deriveBanner,
   deriveJourneyOwnGuess,
@@ -491,5 +492,47 @@ describe('explanationIsRubric', () => {
   it('leaves a classical explanation to the explainer quotes', () => {
     expect(explanationIsRubric({ method: 'gbm', model_ver: 'gbm-20260721T175504Z' })).toBe(false);
     expect(explanationIsRubric(null)).toBe(false);
+  });
+});
+
+// "What the analyzer did" showed the cold-start guess's reason, which answers a
+// different question and was already destined for the comment when that guess is
+// adopted. The O8 rule meant to prevent it is keyed on the confidence band, and
+// a guess at 0.65 lands in the suggest band and slips past.
+describe('actOneExplanation', () => {
+  const classical = {
+    model_ver: 'gbm-20260721T175504Z',
+    explanation: 'The analyzer declined to classify the failure due to a blocking gate.',
+  };
+
+  it('takes the classical account when the record is the guess', () => {
+    const out = actOneExplanation({
+      method: 'coldstart',
+      model_ver: 'rubric+qwen3:4b-q4_K_M',
+      band: 'suggest',
+      explanation: 'Assertion failure in test code with expected vs actual mismatch.',
+      classical,
+    });
+    expect(out.text).toBe(classical.explanation);
+    expect(out.row).toBe(classical);
+  });
+
+  it('keeps a classical record explaining itself', () => {
+    const rec = { method: 'gbm', explanation: 'Matched an earlier decision.' };
+    expect(actOneExplanation(rec)).toEqual({ text: 'Matched an earlier decision.', row: rec });
+  });
+
+  it('shows nothing rather than the guess when no classical account exists', () => {
+    expect(
+      actOneExplanation({
+        method: 'coldstart',
+        explanation: 'Assertion failure in test code.',
+      }),
+    ).toEqual({ text: '', row: null });
+  });
+
+  it('has nothing to show without a record', () => {
+    expect(actOneExplanation(null)).toEqual({ text: '', row: null });
+    expect(actOneExplanation({ method: 'gbm' })).toEqual({ text: '', row: null });
   });
 });
