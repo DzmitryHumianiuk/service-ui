@@ -888,15 +888,28 @@ export const Bench = ({
   // bare Enter never guesses. The row is armed through the same adoptClassical
   // path a click uses, so feedback and provenance stay identical.
   const storyOutcomeId = decisionStory ? decisionStory.outcomeId : null;
+  // A row may only lead when the model agrees with it. The lead is what a bare
+  // Enter arms, so ranking it by log similarity handed the default to whatever
+  // neighbour happened to sit on top, including one the model had refused to
+  // move on. O1-O3 are auto decisions the analyzer applied itself, so agreement
+  // is not in question there. Everywhere else, no agreement means no lead: the
+  // modal pre-selects nothing and the banner already says the call is human.
+  const backingOf = (row) =>
+    deriveOfferBacking({
+      ng1: row ? parseNgVersion(row.suggestRs) : false,
+      offerGroup: row ? groupRef(row.issueType) : null,
+      classical: classicalCall,
+    }).state;
+  const mayLead = (row) => !!row && backingOf(row) !== BACKING.NOT_BACKED && backingOf(row) !== BACKING.DIFFERS;
   let enterLeanRow = null;
   if (['O1', 'O2', 'O3'].includes(storyOutcomeId) && precedentRow) {
     enterLeanRow = precedentRow;
-  } else if (storyOutcomeId === 'O4' && topSuggest) {
+  } else if (storyOutcomeId === 'O4' && mayLead(topSuggest)) {
     enterLeanRow = topSuggest;
   } else if (
     ['O5', 'O6', 'O7'].includes(storyOutcomeId) &&
     offers.converge &&
-    vouchedRows[0]
+    mayLead(vouchedRows[0])
   ) {
     enterLeanRow = vouchedRows[0];
   }
@@ -1277,11 +1290,24 @@ export const Bench = ({
         {formatMessage(messages.benchThinEvidence, { n: topSuggestEvidence })}
       </div>
     ) : null;
-  const armedNote = (locator) => (
-    <div className={cx('armed-note')}>
+  // The armed note is the last thing between a reader and a committed label, and
+  // for an offer the model refused it has to say so there, not only higher up the
+  // card where nobody re-reads at the moment of pressing Enter. No looping blink:
+  // in a project that is still filling up this state is the norm rather than the
+  // exception, and a warning that never stops moving is read once and ignored
+  // after. A single beat when it arms, then a stable amber resting state.
+  const armedNote = (locator, unbacked) => (
+    <div className={cx('armed-note', { warn: unbacked })}>
       {formatMessage(messages.benchArmedNote, { defect: defectName(locator) })}
+      {unbacked && (
+        <span className={cx('armed-warn')}>
+          <span aria-hidden>⚠</span> {formatMessage(messages.benchArmedNotBacked)}
+        </span>
+      )}
     </div>
   );
+  const similarUnbacked =
+    topSuggestBacking.state === BACKING.NOT_BACKED || topSuggestBacking.state === BACKING.DIFFERS;
 
   const renderCheck = ({ kind }) => {
     if (kind === 'past') {
@@ -1323,7 +1349,7 @@ export const Bench = ({
                 {formatMessage(messages.benchCompareLogs)}
               </button>
             </div>
-            {armedCard === 'past' && armedNote(precedentRow.issueType)}
+            {armedCard === 'past' && armedNote(precedentRow.issueType, false)}
           </div>
         );
       }
@@ -1345,6 +1371,7 @@ export const Bench = ({
             className={cx('check', 'suggest', 'actionable', {
               focus: compare && compare === topSuggest,
               armed: armedCard === 'similar',
+              'armed-unbacked': armedCard === 'similar' && similarUnbacked,
             })}
             role="button"
             tabIndex={0}
@@ -1359,7 +1386,7 @@ export const Bench = ({
             <div className={cx('method')}>
               <span className={cx('gl')}>≈</span> {formatMessage(messages.benchCheckSimilar)}
               {backingChip}
-              {topSuggestBacking.state === BACKING.UNKNOWN && enterLeanRow === topSuggest && leadChip}
+              {enterLeanRow === topSuggest && leadChip}
             </div>
             <div className={cx('role')}>{formatMessage(similarRoleMessage)}</div>
             <div className={cx('verd-pill')}>
@@ -1378,7 +1405,7 @@ export const Bench = ({
                 {formatMessage(messages.benchCompareLogs)}
               </button>
             </div>
-            {armedCard === 'similar' && armedNote(topSuggest.issueType)}
+            {armedCard === 'similar' && armedNote(topSuggest.issueType, similarUnbacked)}
           </div>
         );
       }
@@ -1437,7 +1464,7 @@ export const Bench = ({
             {renderPill(rubricRow.issueType)}
           </div>
           <div className={cx('strength')}>{formatMessage(messages.benchAiGuessPct, { pct })}</div>
-          {armedCard === 'ai' && armedNote(rubricRow.issueType)}
+          {armedCard === 'ai' && armedNote(rubricRow.issueType, false)}
         </div>
       );
     }
@@ -1474,7 +1501,7 @@ export const Bench = ({
           {journeyRubric.source_role_enabled === false && (
             <div className={cx('role')}>{formatMessage(messages.benchHypothesisRoleOff)}</div>
           )}
-          {armedCard === 'ai' && armedNote(journeyRubric.predicted_label)}
+          {armedCard === 'ai' && armedNote(journeyRubric.predicted_label, false)}
         </div>
       );
     }
@@ -1507,7 +1534,7 @@ export const Bench = ({
               {formatMessage(messages.benchAiGuessPct, { pct })}
             </div>
           )}
-          {armedCard === 'ai' && armedNote(journeyOwnGuess.issueType)}
+          {armedCard === 'ai' && armedNote(journeyOwnGuess.issueType, false)}
         </div>
       );
     }

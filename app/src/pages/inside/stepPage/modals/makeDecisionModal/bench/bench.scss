@@ -881,6 +881,42 @@
       box-shadow: 0 0 0 2px var(--rp-topaz-focused), var(--rp-shadow);
     }
 
+    // Arming an offer the model refused must not look like arming one it backs.
+    // The ring turns amber and beats ONCE. A looping blink was considered and
+    // dropped: in a project still filling up this is the ordinary state, and a
+    // warning that never stops moving is furniture by the third item, harder to
+    // read while it moves, and a problem for anyone sensitive to motion. One beat
+    // at the moment of arming, then a stable warning colour that stays.
+    &.armed.armed-unbacked,
+    &.armed.armed-unbacked.focus,
+    &.actionable.armed.armed-unbacked:hover {
+      border-color: #d9a441;
+      box-shadow: 0 0 0 2px rgba(217, 164, 65, 0.55), var(--rp-shadow);
+      animation: bench-armed-warn 460ms ease-out 1;
+    }
+
+    @keyframes bench-armed-warn {
+      0% {
+        box-shadow: 0 0 0 2px rgba(217, 164, 65, 0.55), var(--rp-shadow);
+      }
+      45% {
+        box-shadow: 0 0 0 7px rgba(217, 164, 65, 0.28), var(--rp-shadow);
+      }
+      100% {
+        box-shadow: 0 0 0 2px rgba(217, 164, 65, 0.55), var(--rp-shadow);
+      }
+    }
+
+    // The colour carries the warning on its own; the beat only draws the eye at
+    // the moment of arming, so dropping it costs nothing.
+    @media (prefers-reduced-motion: reduce) {
+      &.armed.armed-unbacked,
+      &.armed.armed-unbacked.focus,
+      &.actionable.armed.armed-unbacked:hover {
+        animation: none;
+      }
+    }
+
     // The "leading" chip in the method header (mockup .lean-chip): marks the card
     // a bare Enter arms first.
     .lean-chip {
@@ -934,6 +970,15 @@
       color: var(--rp-gray-secondary, #8b94a3);
     }
     // The armed note at the card foot (mockup .armed-note).
+    .armed-note.warn {
+      color: #8a5a00;
+
+      .armed-warn {
+        display: block;
+        margin-top: 3px;
+        font-weight: 700;
+      }
+    }
     .armed-note {
       margin-top: 8px;
       font-size: 11px;

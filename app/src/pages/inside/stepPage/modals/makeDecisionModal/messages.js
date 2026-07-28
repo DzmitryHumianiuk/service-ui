@@ -764,6 +764,10 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchArmedNote',
     defaultMessage: 'Armed. Apply commits {defect}.',
   },
+  benchArmedNotBacked: {
+    id: 'MakeDecisionModal.benchArmedNotBacked',
+    defaultMessage: 'The model did not back this offer. You are deciding on your own.',
+  },
   // Band phrases (next to any number)
   benchBandAuto: {
     id: 'MakeDecisionModal.benchBandAuto',
