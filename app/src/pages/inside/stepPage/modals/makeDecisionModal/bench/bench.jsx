@@ -405,6 +405,11 @@ export const Bench = ({
   };
 
   const adoptClassical = (row) => {
+    // The open log comparison belongs to the card it was opened from. Selecting a
+    // different card leaves it on screen next to a verdict it says nothing about,
+    // where it reads as evidence for that verdict. Selecting the same card again
+    // keeps it, since there it is still the comparison being talked about.
+    dropStaleCompare(row);
     const issue = {
       ...(row.res.issue || {}),
       issueType: row.issueType,
@@ -449,6 +454,9 @@ export const Bench = ({
   };
 
   const adoptRubric = (row) => {
+    // The AI guess never owns a comparison, so any open one belongs to another
+    // card and has to go.
+    dropStaleCompare(row);
     // Dirty rule (verdict 6.1): pristine takes the rubric why with the "written by
     // AI, edit before applying" note; once edited, keep the human's comment.
     const keepEdited = commentDirty;
@@ -544,6 +552,13 @@ export const Bench = ({
     setCompare(row);
   };
   const closeCompare = () => setCompare(null);
+  // Close a comparison that was opened from a different card than the one now
+  // being selected. Same card: keep it, it is still the one under discussion.
+  const dropStaleCompare = (row) => {
+    if (compare && compare !== row) {
+      closeCompare();
+    }
+  };
   // "Compare logs" toggles: a second click on the same card's button closes the
   // compare view; clicking another card's button switches to it.
   const toggleCompare = (row) => (compare === row ? closeCompare() : openCompare(row));
