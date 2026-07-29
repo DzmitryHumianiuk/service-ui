@@ -1225,16 +1225,35 @@ export const Bench = ({
   // Four states, and only one of them adds anything. UNKNOWN covers a stock or
   // legacy analyzer whose reply we cannot read, and there the card renders
   // exactly as it did before this change.
+  // One chip, never two. A row may only lead where the model agrees, so a
+  // "leading" badge beside "Model agrees" restated the same fact, and the pair
+  // pushed the heading onto a second line where it ran under the corner why?
+  // link. Which card a bare Enter arms is still visible without a badge: the
+  // card keeps its accent edge and the banner names the key. When the card leads,
+  // that hint moves into this chip's tooltip.
+  const similarLeads = enterLeanRow === topSuggest;
   const backingChip =
-    topSuggestBacking.state === BACKING.BACKED ? (
-      <span className={cx('lean-chip', 'backed')}>
-        {formatMessage(messages.benchTagModelAgrees)}
-      </span>
-    ) : topSuggestBacking.state === BACKING.UNKNOWN ? null : (
-      <span className={cx('lean-chip', 'unbacked')}>
-        {formatMessage(messages.benchTagNotBacked)}
-      </span>
-    );
+    topSuggestBacking.state === BACKING.UNKNOWN
+      ? null
+      : {
+          [BACKING.BACKED]: {
+            cls: 'backed',
+            text: formatMessage(messages.benchTagModelAgrees),
+          },
+        }[topSuggestBacking.state] || {
+          cls: 'unbacked',
+          text: formatMessage(messages.benchTagNotBacked),
+        };
+  const similarChip = backingChip ? (
+    <span
+      className={cx('lean-chip', backingChip.cls)}
+      title={similarLeads ? formatMessage(messages.benchLeadingChipTitle) : undefined}
+    >
+      {backingChip.text}
+    </span>
+  ) : similarLeads ? (
+    leadChip
+  ) : null;
 
   const similarRoleMessage =
     topSuggestBacking.state === BACKING.BACKED
@@ -1421,8 +1440,7 @@ export const Bench = ({
             />
             <div className={cx('method')}>
               <span className={cx('gl')}>≈</span> {formatMessage(messages.benchCheckSimilar)}
-              {backingChip}
-              {enterLeanRow === topSuggest && leadChip}
+              {similarChip}
             </div>
             <div className={cx('role')}>{formatMessage(similarRoleMessage)}</div>
             <div className={cx('verd-pill')}>
