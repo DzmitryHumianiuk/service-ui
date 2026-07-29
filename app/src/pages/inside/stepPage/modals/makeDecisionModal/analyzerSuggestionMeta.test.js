@@ -23,6 +23,7 @@ import {
   actOneExplanation,
   classicalVerdict,
   deriveBanner,
+  deriveDecisionStory,
   deriveJourneyOwnGuess,
   deriveMismatchClauses,
   deriveOfferBacking,
@@ -534,5 +535,152 @@ describe('actOneExplanation', () => {
   it('has nothing to show without a record', () => {
     expect(actOneExplanation(null)).toEqual({ text: '', row: null });
     expect(actOneExplanation({ method: 'gbm' })).toEqual({ text: '', row: null });
+  });
+});
+
+// Measured on the stand (live-check-01 item 6239, migrated-project item 5937):
+// the headline read "Found a likely answer, did not apply it." over "Best answer:
+// Product Bug at confidence 0.65", but the analyzer abstained. The 0.65 Product
+// Bug is the cold-start rubric's guess. The O8 rule meant to catch this lives in
+// the abstain branch, and 0.65 clears tau_suggest 0.45, so the guess came out O4.
+describe('deriveDecisionStory with a cold-start guess on record', () => {
+  // The live shape: the guess is the newest row and keeps the classical row it
+  // never displaced, which is the row that says what the analyzer actually did.
+  const guessWithClassical = {
+    method: 'coldstart',
+    model_ver: 'rubric+qwen3:4b-q4_K_M',
+    band: 'suggest',
+    predicted_label: 'pb001',
+    confidence: 0.65,
+    explanation: 'Assertion failure in test code with expected vs actual mismatch.',
+    coldstart_provisional: true,
+    classical: {
+      method: 'gbm',
+      band: 'abstain',
+      predicted_label: 'ti',
+      confidence: 0.321,
+      abstain_reason: 'gbm_below_suggest',
+      explanation: 'The analyzer declined to classify the failure.',
+    },
+  };
+
+  it('tells the abstain story from the classical row, not the guess', () => {
+    const story = deriveDecisionStory(guessWithClassical);
+    expect(story.outcomeId).toBe('O5');
+    expect(story.headKey).toBe('benchStoryHeadO5');
+  });
+
+  it('never announces the guessed defect type in the headline', () => {
+    expect(deriveDecisionStory(guessWithClassical).params.defectGroup).toBeUndefined();
+  });
+
+  it('sends the reader to the card that owns the guess', () => {
+    expect(deriveDecisionStory(guessWithClassical).reasonKey).toBe('benchStoryReasonGuess');
+  });
+
+  it("carries the classical row's number, never the guess's", () => {
+    expect(deriveDecisionStory(guessWithClassical).params.p).toBe('0.32');
+  });
+
+  it('reads the abstain reason off the classical row', () => {
+    const story = deriveDecisionStory({
+      ...guessWithClassical,
+      classical: {
+        ...guessWithClassical.classical,
+        abstain_reason: 'gbm_boilerplate_only_neighbor',
+      },
+    });
+    expect(story.outcomeId).toBe('O6');
+    expect(story.headKey).toBe('benchStoryHeadO5');
+    expect(story.reasonKey).toBe('benchStoryReasonGuess');
+  });
+
+  it('takes the same route for the older rule_cold method name', () => {
+    expect(
+      deriveDecisionStory({ ...guessWithClassical, method: 'rule_cold', model_ver: '' }).outcomeId,
+    ).toBe('O5');
+  });
+
+  it('spots the guess by its model version alone', () => {
+    expect(deriveDecisionStory({ ...guessWithClassical, method: '' }).outcomeId).toBe('O5');
+  });
+
+  it('does not fabricate a classical row when there is none', () => {
+    const story = deriveDecisionStory({
+      method: 'coldstart',
+      band: 'suggest',
+      predicted_label: 'pb001',
+      confidence: 0.65,
+      explanation: 'Assertion failure in test code.',
+    });
+    expect(story.outcomeId).toBe('O8');
+    expect(story.headKey).toBe('benchStoryHeadO8');
+    expect(story.reasonKey).toBe('benchStoryReasonO8');
+    expect(story.params).toEqual({});
+    expect(story.aiText).toBe('');
+  });
+});
+
+// Every outcome that does not sit on a guess record has to come out exactly as
+// it did before the headline was rekeyed.
+describe('deriveDecisionStory keeps the classical outcomes', () => {
+  it('leaves an auto decision applied by an exact match at O1', () => {
+    const story = deriveDecisionStory({
+      band: 'auto',
+      method: 'hash',
+      predicted_label: 'pb001',
+      predicted_group: 'PRODUCT_BUG',
+      confidence: 0.92,
+    });
+    expect(story.outcomeId).toBe('O1');
+    expect(story.headKey).toBe('benchStoryHeadO1');
+    expect(story.reasonKey).toBe('benchStoryReasonO1');
+    expect(story.params).toEqual({ defectGroup: 'PRODUCT_BUG', p: '0.92' });
+  });
+
+  it('leaves a real suggest endorsement at O4', () => {
+    const story = deriveDecisionStory({
+      band: 'suggest',
+      method: 'gbm',
+      model_ver: 'gbm-20260721T175504Z',
+      predicted_label: 'ab001',
+      predicted_group: 'AUTOMATION_BUG',
+      confidence: 0.61,
+    });
+    expect(story.outcomeId).toBe('O4');
+    expect(story.headKey).toBe('benchStoryHeadO4');
+    expect(story.reasonKey).toBe('benchStoryReasonO4');
+    expect(story.params).toEqual({ defectGroup: 'AUTOMATION_BUG', p: '0.61' });
+  });
+
+  it('leaves a classical abstain in its own family', () => {
+    const story = deriveDecisionStory({
+      band: 'abstain',
+      method: 'gbm',
+      predicted_label: 'ti',
+      confidence: 0.321,
+      abstain_reason: 'gbm_below_suggest',
+    });
+    expect(story.outcomeId).toBe('O5');
+    expect(story.headKey).toBe('benchStoryHeadO5');
+    expect(story.reasonKey).toBe('benchStoryReasonO5');
+    expect(story.params.p).toBe('0.32');
+  });
+
+  it('leaves an abstain with no reason and no number at O7', () => {
+    const story = deriveDecisionStory({ band: 'abstain', method: 'gbm' });
+    expect(story.outcomeId).toBe('O7');
+    expect(story.reasonKey).toBe('benchStoryReasonO7');
+  });
+
+  it('leaves the no-record state at O9', () => {
+    const story = deriveDecisionStory(null);
+    expect(story.outcomeId).toBe('O9');
+    expect(story.headKey).toBe('benchStoryHeadO9');
+    expect(story.reasonKey).toBe('benchStoryReasonO9');
+  });
+
+  it('leaves the failed journey fetch at O9b', () => {
+    expect(deriveDecisionStory({ fetchError: true }).outcomeId).toBe('O9b');
   });
 });

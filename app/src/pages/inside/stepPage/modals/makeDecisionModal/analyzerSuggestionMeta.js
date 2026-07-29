@@ -471,6 +471,49 @@ const _STORY_KEYS = {
   O9b: { headKey: 'benchStoryHeadO9b', reasonKey: 'benchStoryReasonO9b' },
 };
 
+// The reason line used when the record on the journey is the cold-start guess and
+// a classical row exists. The headline then comes from that classical row, so the
+// reason line has one job left: send the reader to the card that owns the guess.
+const GUESS_REASON_KEY = 'benchStoryReasonGuess';
+
+/*
+ * True when this journey record is the cold-start rubric's GUESS rather than a
+ * decision the analyzer made. Keyed on what the row IS (its method, its model
+ * version, its own provisional flag), never on the confidence band it happened
+ * to land in: the rubric writes a pseudo-confidence that can sit anywhere,
+ * including above the 0.45 suggest line.
+ */
+export const isColdStartGuess = (journeyDecision) => {
+  if (!journeyDecision || typeof journeyDecision !== 'object') {
+    return false;
+  }
+  const modelVer = typeof journeyDecision.model_ver === 'string' ? journeyDecision.model_ver : '';
+  const method = typeof journeyDecision.method === 'string' ? journeyDecision.method : '';
+  return (
+    modelVer.startsWith('rubric+') ||
+    method === 'coldstart' ||
+    method === 'rule_cold' ||
+    journeyDecision.coldstart_provisional === true
+  );
+};
+
+// Which member of the abstain family a row belongs to, from its own abstain
+// reason and its own confidence. Shared so the guess branch below can ask the
+// same question about the CLASSICAL row that the main path asks about the record.
+const _abstainOutcome = (reason, p) => {
+  if (reason === 'gbm_boilerplate_only_neighbor') {
+    return 'O6';
+  }
+  if (reason === 'no_confident_rule') {
+    return 'O7';
+  }
+  if (reason === 'gbm_below_suggest') {
+    return 'O5';
+  }
+  // A generic abstain with a resolvable top-candidate confidence: O5 can cite it honestly.
+  return p != null ? 'O5' : 'O7';
+};
+
 /*
  * Act 1 decision story (verdict 4.1 / 4.2). Deterministic, decision-fields only.
  * Returns the outcome id (O1..O9b), the message keys for its headline and reason
@@ -480,6 +523,8 @@ const _STORY_KEYS = {
  *   - null / non-object            -> O9  (never analyzed, no record)
  *   - marker { fetchError: true }  -> O9b (the journey fetch itself failed; the hub
  *     passes this shape so O9 and O9b are distinguishable, per contract D step 1)
+ *   - a cold-start guess           -> the abstain family read off its `classical`
+ *     row (O5..O7), or O8 when there is no classical row to read
  *   - a real decision block        -> O1..O8 from band / method / abstain_reason
  *
  * O10 (silent, zero ERROR logs) is NOT produced here: it is a layout-level branch
@@ -527,9 +572,61 @@ export const deriveDecisionStory = (journeyDecision) => {
   const band = typeof decision.band === 'string' ? decision.band : null;
   const method = typeof decision.method === 'string' ? decision.method : null;
   const reason = typeof decision.abstain_reason === 'string' ? decision.abstain_reason : null;
-  const hasProvisional = !!decision.coldstart;
   const defectGroup = _decisionGroup(decision);
   const p = _fmtConfidence(decision.confidence);
+
+  /*
+   * The record on the journey is the newest row, and that row can be the
+   * cold-start guess. A guess is never applied, so the headline has to describe
+   * the classical row's account: on the stand a guess at 0.65 landed in the
+   * suggest band and the headline announced "Found a likely answer" for a defect
+   * type the analyzer never chose, while the paragraph under it said the
+   * analyzer abstained. The Explanation already reads the classical row for the
+   * same reason (see actOneExplanation); this keys the headline the same way.
+   *
+   * The family is always the abstain one, whatever band the classical row sits
+   * in, because nothing was applied. With no classical row there is no account
+   * to borrow, so this returns O8 rather than inventing one, and O8 already
+   * names the cold start.
+   */
+  if (isColdStartGuess(decision)) {
+    const classical =
+      decision.classical && typeof decision.classical === 'object' ? decision.classical : null;
+    if (!classical) {
+      return {
+        outcomeId: 'O8',
+        headKey: _STORY_KEYS.O8.headKey,
+        reasonKey: _STORY_KEYS.O8.reasonKey,
+        params: {},
+        timeRel: relativeTimeFrom(decision.created_at),
+        hasAi: false,
+        aiText: '',
+        quotes: [],
+      };
+    }
+    const classicalReason =
+      typeof classical.abstain_reason === 'string' ? classical.abstain_reason : null;
+    const classicalP = _fmtConfidence(classical.confidence);
+    const guessOutcomeId = _abstainOutcome(classicalReason, classicalP);
+    // The classical row's own number, carried for the bridge line, which is the
+    // one sentence that states this number sat under the 0.45 suggest line. The
+    // reason line does not print it: it points at the AI guess card instead.
+    const guessParams = classicalP != null ? { p: classicalP } : {};
+    const classicalText =
+      typeof classical.explanation === 'string' ? classical.explanation.trim() : '';
+    return {
+      outcomeId: guessOutcomeId,
+      headKey: _STORY_KEYS[guessOutcomeId].headKey,
+      reasonKey: GUESS_REASON_KEY,
+      params: guessParams,
+      timeRel: relativeTimeFrom(classical.created_at || decision.created_at),
+      hasAi: !!classicalText,
+      aiText: classicalText,
+      quotes: Array.isArray(classical.quotes)
+        ? classical.quotes.filter((q) => typeof q === 'string' && q.trim().length)
+        : [],
+    };
+  }
 
   let outcomeId;
   if (band === BANDS.AUTO) {
@@ -543,28 +640,21 @@ export const deriveDecisionStory = (journeyDecision) => {
   } else if (band === BANDS.SUGGEST) {
     outcomeId = 'O4';
   } else {
-    // abstain (payload band 'abstain', or a defensive 'below_suggest')
-    if ((method === 'rule_cold' || method === 'coldstart') && hasProvisional) {
-      outcomeId = 'O8';
-    } else if (reason === 'gbm_boilerplate_only_neighbor') {
-      outcomeId = 'O6';
-    } else if (reason === 'no_confident_rule') {
-      outcomeId = 'O7';
-    } else if (reason === 'gbm_below_suggest') {
-      outcomeId = 'O5';
-    } else if (p != null) {
-      // generic abstain with a resolvable top-candidate confidence: O5 can cite it honestly
-      outcomeId = 'O5';
-    } else {
-      outcomeId = 'O7';
-    }
+    // abstain (payload band 'abstain', or a defensive 'below_suggest'). O8 is no
+    // longer decided here: the guess branch above owns every cold-start record,
+    // in every band, which is the whole point of keying on the row type. What is
+    // left is the classical abstain family.
+    outcomeId = _abstainOutcome(reason, p);
   }
 
   const params = {};
   if (defectGroup && (outcomeId === 'O1' || outcomeId === 'O2' || outcomeId === 'O3' || outcomeId === 'O4')) {
     params.defectGroup = defectGroup;
   }
-  if (p != null && ['O1', 'O2', 'O3', 'O4', 'O5'].indexOf(outcomeId) !== -1) {
+  // The confidence of the row the story is about. Only O1-O5 print it, but the
+  // bridge line reads it for the whole abstain family, and reading it here rather
+  // than off the record keeps that sentence about the same row as the headline.
+  if (p != null && ['O1', 'O2', 'O3', 'O4', 'O5', 'O6', 'O7'].indexOf(outcomeId) !== -1) {
     params.p = p;
   }
 
@@ -743,14 +833,9 @@ export const groundQuote = (normQuote, normLogLines) => {
 // rubric rather than by the explainer. The explainer's quotes describe its OWN
 // text, so judging a rubric explanation with them is judging one answer by
 // another answer's evidence.
-export const explanationIsRubric = (journeyDecision) => {
-  if (!journeyDecision || typeof journeyDecision !== 'object') {
-    return false;
-  }
-  const modelVer = typeof journeyDecision.model_ver === 'string' ? journeyDecision.model_ver : '';
-  const method = typeof journeyDecision.method === 'string' ? journeyDecision.method : '';
-  return modelVer.startsWith('rubric+') || method === 'coldstart' || method === 'rule_cold';
-};
+// Same test as the headline uses, so the two halves of Act 1 can never disagree
+// about which row they are describing.
+export const explanationIsRubric = (journeyDecision) => isColdStartGuess(journeyDecision);
 
 /*
  * The explanation Act 1 shows, plus the row it belongs to.
