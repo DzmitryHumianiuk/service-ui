@@ -38,27 +38,30 @@ import {
   parseFeatures,
   parseOfferedLabelProbability,
 } from './analyzerSuggestionMeta';
+import maskingCases from './__fixtures__/quoteMasking.json';
 
 // The explainer quotes the analyzer's MASKED signature, while the item's log
 // lines are raw. Both go through normalizeLine before the quote gate compares
 // them, so masked and raw forms of the same line have to land on one string.
+//
+// The cases come from a table shared with the analyzer, not written here. Written
+// here they could only ever agree with themselves: the masked column would be
+// whatever this file assumed, so the analyzer could change its masking and every
+// test would still pass. The analyzer pins the same table against its real
+// masking (tests/unit/test_quote_masking_contract.py), so a change on either side
+// now breaks that side's test. Keep the two copies identical.
+//
+// The table deliberately carries the cases where the two rules disagreed: a
+// signed number, a dotted version, digits glued to a word.
 describe('normalizeLine masking parity with the analyzer', () => {
-  const pairs = [
-    [
-      'expected response to have status code 200 but got 400',
-      'expected response to have status code <NUM> but got <NUM>',
-    ],
-    ['connection refused to 10.0.12.7:5432', 'connection refused to <IP>'],
-    [
-      'run 8f14e45f-ceea-467a-9c2f-0b0b0b0b0b0b failed',
-      'run <UUID> failed',
-    ],
-    ['pointer 0x7ffee3b0 is null', 'pointer <HEX> is null'],
-    ['cannot read /opt/app/fixtures/case.json', 'cannot read <PATH>'],
-  ];
+  const pairs = maskingCases.cases.map((c) => [c.why, c.raw, c.masked]);
 
-  it.each(pairs)('folds a raw line and its masked quote together: %s', (raw, masked) => {
+  it.each(pairs)('folds a raw line and its masked quote together: %s', (why, raw, masked) => {
     expect(normalizeLine(raw)).toBe(normalizeLine(masked));
+  });
+
+  it.each(pairs)('grounds the masked quote against the raw line: %s', (why, raw, masked) => {
+    expect(groundQuote(normalizeLine(masked), [normalizeLine(raw)])).toBeGreaterThanOrEqual(0);
   });
 
   it('is idempotent, so running it over an already masked quote changes nothing', () => {

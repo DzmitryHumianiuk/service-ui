@@ -378,10 +378,18 @@ export const normalizeLine = (line) =>
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '<UUID>')
     .replace(/\b0[xX][0-9a-fA-F]+\b|\b[0-9a-fA-F]{16,}\b/g, '<HEX>')
     .replace(/(?:[A-Za-z]:)?(?:[\\/][\w.-]+){2,}/g, '<PATH>')
-    // Plain digits last, so the rules above keep their own tokens. No lookbehind
-    // here on purpose: it is applied to both sides equally, and older Safari
-    // does not support lookbehind in a regular expression.
-    .replace(/\d+(?:\.\d+)?/g, '<NUM>')
+    // Numbers last, so the rules above keep their own tokens.
+    //
+    // This has to mask exactly what the analyzer masks. The analyzer stores the
+    // excerpt already masked, so the quote arrives carrying <NUM> where the log
+    // still carries the digits, and the two only line up if both sides drew the
+    // token boundary in the same place. A bare \d+ drew it differently: on
+    // "delta was -5 items" the analyzer produced "delta was <NUM> items" and this
+    // produced "delta was -<NUM> items", and the quote grounded nowhere. Same
+    // shape as the analyzer's rule, written without a lookbehind because older
+    // Safari does not support one: the leading group is captured and put back.
+    // tests/fixtures/quote_masking_cases.json holds the shared cases.
+    .replace(/(^|[^\w.])[-+]?\d+(?:\.\d+)?(?![\w.])/g, '$1<NUM>')
     .replace(/\s+/g, ' ')
     .trim();
 
