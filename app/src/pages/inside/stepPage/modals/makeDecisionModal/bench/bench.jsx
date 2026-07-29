@@ -1319,7 +1319,7 @@ export const Bench = ({
     return null;
   })();
 
-  // How much the model believes the defect type this card offers. The verdict line
+  // How much weight the model puts on the defect type this card offers. The verdict line
   // above answers a different question: what the model decided about the FAILURE.
   // Rendered on the pill's own line, so it costs no extra line, and only when the
   // analyzer stated the number (an older analyzer sends none and nothing shows).

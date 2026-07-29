@@ -866,10 +866,14 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchOfferedLabelP',
     defaultMessage: 'model {p}',
   },
+  // Deliberately does not call this a measured belief. Only the model's top pick
+  // is checked against past results; the weight on every other defect type is the
+  // model's raw preference, rescaled to fit. Saying otherwise would claim an
+  // accuracy nobody has measured, which is the one thing this card must not do.
   benchOfferedLabelPTitle: {
     id: 'MakeDecisionModal.benchOfferedLabelPTitle',
     defaultMessage:
-      'How much the model believes this defect type, from 0 to 1. It is not how well the logs match.',
+      'How much weight the model puts on this defect type, from 0 to 1. It is not how well the logs match. Only the model top pick is checked against past results, so read the rest as a rough weight.',
   },
   benchThinEvidence: {
     id: 'MakeDecisionModal.benchThinEvidence',
