@@ -311,6 +311,10 @@
       line-height: 18px;
       color: var(--rp-e-400);
     }
+    // The way in to the Inspector, offered where there is nothing else to read.
+    .sh-link {
+      margin-top: 8px;
+    }
   }
 
   .failure-panel {

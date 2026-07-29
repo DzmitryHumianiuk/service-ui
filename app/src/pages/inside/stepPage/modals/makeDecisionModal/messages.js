@@ -709,6 +709,14 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchCheckAiRole',
     defaultMessage: 'With no earlier match, the AI reasons from a set of rules.',
   },
+  benchEmptyInspector: {
+    id: 'MakeDecisionModal.benchEmptyInspector',
+    defaultMessage: 'See what the analyzer is doing with this test',
+  },
+  benchCheckAiRule: {
+    id: 'MakeDecisionModal.benchCheckAiRule',
+    defaultMessage: 'Rule matched: {rule}.',
+  },
   benchCheckAiNone: {
     id: 'MakeDecisionModal.benchCheckAiNone',
     defaultMessage: 'No AI guess for this failure.',

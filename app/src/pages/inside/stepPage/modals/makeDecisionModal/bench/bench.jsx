@@ -718,6 +718,20 @@ export const Bench = ({
   // confidence 0.65") and denied it in the card below ("No AI guess for this
   // failure").
   const journeyOwnGuess = deriveJourneyOwnGuess(journeyDecision, journeyRubric);
+  // The rubric rule behind the guess, by its reader-facing name. The analyzer
+  // stores the name next to the id so nothing here has to keep a copy of the
+  // rubric; rows written before the name existed carry the id only, and then the
+  // card keeps its generic line rather than showing "R6" at a reader.
+  const guessRuleName = (block) => {
+    const name = block && typeof block.rule_name === 'string' ? block.rule_name.trim() : '';
+    return name || '';
+  };
+  const decisionRuleName = guessRuleName(journeyDecision?.coldstart);
+  const hypothesisRuleName = guessRuleName(journeyRubric?.coldstart);
+  const aiRoleLine = (ruleName) =>
+    ruleName
+      ? formatMessage(messages.benchCheckAiRule, { rule: ruleName })
+      : formatMessage(messages.benchCheckAiRole);
   const decisionHasExplanation = !!(
     journeyDecision &&
     typeof journeyDecision.explanation === 'string' &&
@@ -1481,7 +1495,7 @@ export const Bench = ({
             <span className={cx('gl')}>✦</span> {formatMessage(messages.benchCheckAi)}
             <span className={cx('tag-nc')}>{formatMessage(messages.benchNotConfirmed)}</span>
           </div>
-          <div className={cx('role')}>{formatMessage(messages.benchCheckAiRole)}</div>
+          <div className={cx('role')}>{aiRoleLine(decisionRuleName)}</div>
           <div className={cx('verd-pill')}>
             {renderPill(rubricRow.issueType)}
           </div>
@@ -1518,6 +1532,9 @@ export const Bench = ({
             <span className={cx('tag-nc')}>{formatMessage(messages.benchTagHypothesis)}</span>
           </div>
           <div className={cx('role')}>{formatMessage(messages.benchHypothesisNote)}</div>
+          {hypothesisRuleName && (
+            <div className={cx('role')}>{aiRoleLine(hypothesisRuleName)}</div>
+          )}
           <div className={cx('verd-pill')}>{renderPill(journeyRubric.predicted_label)}</div>
           <div className={cx('strength')}>{formatMessage(messages.benchAiGuessPct, { pct })}</div>
           {journeyRubric.source_role_enabled === false && (
@@ -1549,7 +1566,7 @@ export const Bench = ({
             <span className={cx('gl')}>✦</span> {formatMessage(messages.benchCheckAi)}
             <span className={cx('tag-nc')}>{formatMessage(messages.benchNotConfirmed)}</span>
           </div>
-          <div className={cx('role')}>{formatMessage(messages.benchCheckAiRole)}</div>
+          <div className={cx('role')}>{aiRoleLine(decisionRuleName)}</div>
           <div className={cx('verd-pill')}>{renderPill(journeyOwnGuess.issueType)}</div>
           {pct > 0 && (
             <div className={cx('strength')}>
@@ -2263,6 +2280,18 @@ export const Bench = ({
         <div className={cx('sh-body')}>{formatMessage(emptyCopy.body)}</div>
         <div className={cx('sh-next')}>{formatMessage(emptyCopy.next)}</div>
         <div className={cx('sh-note')}>{formatMessage(emptyCopy.note)}</div>
+        {/* The empty state is the one place with nothing to read, and "still
+            working" is the hardest to sit through. The Inspector shows what the
+            analyzer is actually doing with this item, so offer the way in rather
+            than leaving the reader to guess or reopen the modal. */}
+        {itemInspector && (
+          <div className={cx('sh-link')}>
+            <InspectorLink
+              href={itemInspector}
+              label={formatMessage(messages.benchEmptyInspector)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
