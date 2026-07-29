@@ -80,6 +80,7 @@ import {
   parseExplanation,
   parseExplKind,
   parseNgVersion,
+  parseOfferedLabelProbability,
   parseProvenance,
 } from '../analyzerSuggestionMeta';
 import styles from './bench.scss';
@@ -1318,6 +1319,33 @@ export const Bench = ({
     return null;
   })();
 
+  // How much the model believes the defect type this card offers. The verdict line
+  // above answers a different question: what the model decided about the FAILURE.
+  // Rendered on the pill's own line, so it costs no extra line, and only when the
+  // analyzer stated the number (an older analyzer sends none and nothing shows).
+  // Skipped when the model backed the offer and the verdict line already prints
+  // that same number for that same defect type, so the card never says it twice.
+  const offeredLabelP = (() => {
+    const p = topSuggest ? parseOfferedLabelProbability(topSuggest.suggestRs) : null;
+    if (p === null) {
+      return null;
+    }
+    if (
+      topSuggestBacking.state === BACKING.BACKED &&
+      typeof topSuggestBacking.confidence === 'number'
+    ) {
+      return null;
+    }
+    return (
+      <span
+        className={cx('label-p')}
+        title={formatMessage(messages.benchOfferedLabelPTitle)}
+      >
+        {formatMessage(messages.benchOfferedLabelP, { p: p.toFixed(2) })}
+      </span>
+    );
+  })();
+
   // Only said when the pool is small enough to explain a thin answer. A mature
   // project never sees this line.
   const thinEvidenceLine =
@@ -1427,6 +1455,7 @@ export const Bench = ({
             <div className={cx('role')}>{formatMessage(similarRoleMessage)}</div>
             <div className={cx('verd-pill')}>
               {renderPill(topSuggest.issueType)}
+              {offeredLabelP}
             </div>
             <div className={cx('strength')}>{alikeLine}</div>
             {modelVerdictLine}

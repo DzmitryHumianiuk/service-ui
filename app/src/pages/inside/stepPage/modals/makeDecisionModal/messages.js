@@ -859,6 +859,18 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchModelBacks',
     defaultMessage: 'The model backs this at {p}.',
   },
+  // Sits on the defect pill's own line, so it costs no extra line on the card.
+  // The verdict line above says what the model decided about the failure; this
+  // says how much the model believes the defect type on the pill next to it.
+  benchOfferedLabelP: {
+    id: 'MakeDecisionModal.benchOfferedLabelP',
+    defaultMessage: 'model {p}',
+  },
+  benchOfferedLabelPTitle: {
+    id: 'MakeDecisionModal.benchOfferedLabelPTitle',
+    defaultMessage:
+      'How much the model believes this defect type, from 0 to 1. It is not how well the logs match.',
+  },
   benchThinEvidence: {
     id: 'MakeDecisionModal.benchThinEvidence',
     defaultMessage:

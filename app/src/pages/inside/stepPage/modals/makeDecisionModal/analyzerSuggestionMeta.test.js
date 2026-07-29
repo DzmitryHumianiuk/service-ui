@@ -33,7 +33,9 @@ import {
   isDecisionFresh,
   normalizeLine,
   offersRestOnSimilarityAlone,
+  parseConfidence,
   parseFeatures,
+  parseOfferedLabelProbability,
 } from './analyzerSuggestionMeta';
 
 // The explainer quotes the analyzer's MASKED signature, while the item's log
@@ -534,5 +536,70 @@ describe('actOneExplanation', () => {
   it('has nothing to show without a record', () => {
     expect(actOneExplanation(null)).toEqual({ text: '', row: null });
     expect(actOneExplanation({ method: 'gbm' })).toEqual({ text: '', row: null });
+  });
+});
+
+// The model's own answer and the label a row offers are two different things.
+// On the stand the model held To Investigate at 0.63 while the row offered System
+// Issue, so the only number the card had was about a defect type it was not
+// showing. `plabel=` carries the number for the offered type, and is absent
+// whenever the analyzer does not know it.
+describe('parseOfferedLabelProbability', () => {
+  const row = (modelInfo) => ({ modelInfo });
+
+  it('reads the offered label probability off a full v1 row', () => {
+    expect(
+      parseOfferedLabelProbability(
+        row('analyzer-ng;gbm=2026.07;emb=e5;kb_mode=none;ng=1;band=suggest;src=human-confirmed;plabel=0.1850'),
+      ),
+    ).toBeCloseTo(0.185, 6);
+  });
+
+  it('is not the model confidence: both tokens are read on their own', () => {
+    const both = row('ng=1;band=suggest;src=human-confirmed;conf=0.6300;plabel=0.1850');
+    expect(parseOfferedLabelProbability(both)).toBeCloseTo(0.185, 6);
+    expect(parseConfidence(both)).toBeCloseTo(0.63, 6);
+  });
+
+  it('reads the token when it is last, and when the decline text follows it', () => {
+    expect(parseOfferedLabelProbability(row('ng=1;band=suggest;plabel=0.4000'))).toBeCloseTo(
+      0.4,
+      6,
+    );
+    expect(
+      parseOfferedLabelProbability(
+        row('ng=1;band=below_suggest;plabel=0.4000;ek=decline;why=too weak; below the line'),
+      ),
+    ).toBeCloseTo(0.4, 6);
+  });
+
+  it('keeps a stated zero, which means the model gives this type nothing', () => {
+    expect(parseOfferedLabelProbability(row('ng=1;band=suggest;plabel=0.0000'))).toBe(0);
+  });
+
+  it('says nothing when the analyzer did not state a number', () => {
+    expect(
+      parseOfferedLabelProbability(row('ng=1;band=suggest;src=human-confirmed;conf=0.9500')),
+    ).toBeNull();
+    expect(parseOfferedLabelProbability(row('analyzer-ng;gbm=none;emb=e5;kb_mode=none'))).toBeNull();
+    expect(parseOfferedLabelProbability(row(''))).toBeNull();
+  });
+
+  it('says nothing for a row it cannot read at all', () => {
+    expect(parseOfferedLabelProbability(null)).toBeNull();
+    expect(parseOfferedLabelProbability(undefined)).toBeNull();
+    expect(parseOfferedLabelProbability({})).toBeNull();
+    expect(parseOfferedLabelProbability(row(0.19))).toBeNull();
+  });
+
+  it('never invents a number from a broken or out-of-range token', () => {
+    expect(parseOfferedLabelProbability(row('ng=1;plabel=;band=suggest'))).toBeNull();
+    expect(parseOfferedLabelProbability(row('ng=1;plabel=abc;band=suggest'))).toBeNull();
+    expect(parseOfferedLabelProbability(row('ng=1;plabel=1.5;band=suggest'))).toBeNull();
+    expect(parseOfferedLabelProbability(row('ng=1;plabel=..;band=suggest'))).toBeNull();
+  });
+
+  it('does not match a token that only ends in plabel', () => {
+    expect(parseOfferedLabelProbability(row('ng=1;xplabel=0.9;band=suggest'))).toBeNull();
   });
 });
