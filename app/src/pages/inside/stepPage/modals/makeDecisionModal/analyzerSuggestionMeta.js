@@ -112,6 +112,29 @@ export const parseConfidence = (suggestRs) => {
   return Number.isFinite(value) ? value : null;
 };
 
+// How much the model believes THIS row's own defect type (`plabel=` token, 0..1).
+// A different question from parseConfidence: `conf=` is the model's belief in its OWN
+// answer, whatever defect type that answer named, so on a row offering another type it
+// says nothing about the offer. The analyzer omits `plabel=` whenever it does not know
+// the number (a hash or knowledge-base match, a cold-start row, a legacy analyzer), and
+// a missing, unreadable or out-of-range token returns null here so the UI can show
+// nothing. Never invent a number for a defect type the model did not score.
+export const parseOfferedLabelProbability = (suggestRs) => {
+  const modelInfo = suggestRs && suggestRs.modelInfo;
+  if (typeof modelInfo !== 'string') {
+    return null;
+  }
+  const match = modelInfo.match(/(?:^|;)plabel=([0-9.]+)(?:;|$)/);
+  if (!match) {
+    return null;
+  }
+  const value = Number.parseFloat(match[1]);
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    return null;
+  }
+  return value;
+};
+
 // Explanation kind: match | decline | rubric (`ek=` token). Drives the tone of the
 // explanation block (a `decline` explanation is warning-toned "why the analyzer said no").
 export const parseExplKind = (suggestRs) => {

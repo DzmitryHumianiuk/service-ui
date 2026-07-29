@@ -865,6 +865,22 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchModelBacks',
     defaultMessage: 'The model backs this at {p}.',
   },
+  // Sits on the defect pill's own line, so it costs no extra line on the card.
+  // The verdict line above says what the model decided about the failure; this
+  // says how much the model believes the defect type on the pill next to it.
+  benchOfferedLabelP: {
+    id: 'MakeDecisionModal.benchOfferedLabelP',
+    defaultMessage: 'model {p}',
+  },
+  // Deliberately does not call this a measured belief. Only the model's top pick
+  // is checked against past results; the weight on every other defect type is the
+  // model's raw preference, rescaled to fit. Saying otherwise would claim an
+  // accuracy nobody has measured, which is the one thing this card must not do.
+  benchOfferedLabelPTitle: {
+    id: 'MakeDecisionModal.benchOfferedLabelPTitle',
+    defaultMessage:
+      'How much weight the model puts on this defect type, from 0 to 1. It is not how well the logs match. Only the model top pick is checked against past results, so read the rest as a rough weight.',
+  },
   benchThinEvidence: {
     id: 'MakeDecisionModal.benchThinEvidence',
     defaultMessage:
