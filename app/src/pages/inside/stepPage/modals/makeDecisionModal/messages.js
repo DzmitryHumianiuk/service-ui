@@ -516,6 +516,12 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchStoryReasonO8',
     defaultMessage: 'The AI wrote a first guess instead. It is on offer below, not applied.',
   },
+  // The record on the journey is the cold-start guess. The headline comes from the
+  // classical row, so this line only sends the reader to the card that owns the guess.
+  benchStoryReasonGuess: {
+    id: 'MakeDecisionModal.benchStoryReasonGuess',
+    defaultMessage: 'The AI wrote a first guess instead. It is on the AI guess card below.',
+  },
   benchStoryReasonO9: {
     id: 'MakeDecisionModal.benchStoryReasonO9',
     defaultMessage: 'The analyzer has no decision recorded for this item.',

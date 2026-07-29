@@ -1034,12 +1034,11 @@ export const Bench = ({
     offerRows.length > 0;
   const topAboveRow = vouchedRows[0] || unlabeledRows[0] || offerRows[0] || null;
   const bridgeX = topAboveRow ? scoreToAlike(topAboveRow.score) : '';
-  const bridgeP =
-    journeyDecision &&
-    typeof journeyDecision.confidence === 'number' &&
-    journeyDecision.confidence > 0
-      ? journeyDecision.confidence.toFixed(2)
-      : (decisionStory && decisionStory.params.p) || '';
+  // The story's own number, which belongs to the row the story is about. It used
+  // to be read off the record, and when the record is the cold-start guess that
+  // is the guess's number: the sentence would then state that 0.65 sat under the
+  // 0.45 suggest line. For every other outcome the two are the same number.
+  const bridgeP = (decisionStory && decisionStory.params.p) || '';
   let bridgeText = null;
   if (abstainWithOffers && bridgeX && bridgeP) {
     const bridgeBase = formatMessage(messages.benchStoryBridge, { x: bridgeX, p: bridgeP });
