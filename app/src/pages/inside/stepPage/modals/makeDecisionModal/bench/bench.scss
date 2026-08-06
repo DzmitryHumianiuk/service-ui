@@ -2290,60 +2290,50 @@
     }
   }
 
-  .bulk-offer {
-    .bo-head {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--rp-charcoal);
-    }
+  // The bulk story banner carries an absolutely-positioned corner link; the
+  // head must be its positioning context or the link escapes to the modal edge.
+  .region-head {
+    position: relative;
+  }
 
-    .bo-sub {
-      margin-top: 2px;
-      font-size: 12px;
-      line-height: 16px;
+  .bl-group-line {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--rp-charcoal);
+
+    &.many {
       color: var(--rp-e-400);
     }
+  }
 
-    .bo-rows {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-    }
+  .bo-alike {
+    font-size: 12px;
+    color: var(--rp-e-400);
+  }
 
-    .bo-row {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border: 1px solid var(--rp-e-200);
-      border-radius: 8px;
-      background: var(--rp-bg-000);
-      font-family: var(--rp-font);
-      font-size: 13px;
-      color: var(--rp-charcoal);
-      cursor: pointer;
-      transition: border-color 120ms ease, box-shadow 120ms ease;
+  .bo-expl {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 17px;
+    color: var(--rp-charcoal);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-      &:hover {
-        border-color: var(--rp-e-300);
-        box-shadow: var(--rp-shadow-hover);
-      }
+  .bulk-declined {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--rp-e-400);
+  }
 
-      &.armed {
-        border-color: var(--rp-topaz);
-        box-shadow: 0 0 0 2px var(--rp-topaz-focused);
-      }
-    }
-
-    .bo-name {
-      font-weight: 600;
-    }
-
-    .bo-alike {
-      font-size: 12px;
-      color: var(--rp-e-400);
-    }
+  .bulk-no-offers {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--rp-charcoal);
   }
 
   .cmt-opt-anchor {

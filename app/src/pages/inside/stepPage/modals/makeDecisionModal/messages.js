@@ -1367,17 +1367,62 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchBulkListCap',
     defaultMessage: 'Tests to change',
   },
-  benchBulkOfferHead: {
-    id: 'MakeDecisionModal.benchBulkOfferHead',
-    defaultMessage: 'The analyzer offer for this failure group',
+  // One failure group: the selection maps to an exact analyzer launch group
+  // (Unique Errors clusters and the Inspector grouping share the same
+  // error-hash `_group()`), so the group decision anatomy applies.
+  benchBulkOneGroup: {
+    id: 'MakeDecisionModal.benchBulkOneGroup',
+    defaultMessage: 'All selected tests share one failure signature.',
   },
-  benchBulkOfferSub: {
-    id: 'MakeDecisionModal.benchBulkOfferSub',
-    defaultMessage: 'From earlier failures with similar logs. Click an offer to use its defect type.',
+  benchBulkManyGroups: {
+    id: 'MakeDecisionModal.benchBulkManyGroups',
+    defaultMessage:
+      'The selected tests fail in {count} different ways. Offers appear when the selection is one failure group.',
   },
-  benchProvFromOffer: {
-    id: 'MakeDecisionModal.benchProvFromOffer',
-    defaultMessage: 'from the analyzer offer',
+  benchBulkStoryAuto: {
+    id: 'MakeDecisionModal.benchBulkStoryAuto',
+    defaultMessage: 'The analyzer already applied {defect} to this failure on its own.',
+  },
+  benchBulkInspector: {
+    id: 'MakeDecisionModal.benchBulkInspector',
+    defaultMessage: 'Open this failure in the Inspector',
+  },
+  benchBulkOffersCap: {
+    id: 'MakeDecisionModal.benchBulkOffersCap',
+    defaultMessage: 'What the analyzer offers for this failure group',
+  },
+  benchBulkNoOffers: {
+    id: 'MakeDecisionModal.benchBulkNoOffers',
+    defaultMessage:
+      'The analyzer has nothing stored for this failure group yet. Pick a defect type yourself.',
+  },
+  benchBulkPastRole: {
+    id: 'MakeDecisionModal.benchBulkPastRole',
+    defaultMessage: 'This same failure was decided in an earlier run.',
+  },
+  benchBulkDecidedByPerson: {
+    id: 'MakeDecisionModal.benchBulkDecidedByPerson',
+    defaultMessage: 'A person decided that failure.',
+  },
+  benchBulkDecidedAuto: {
+    id: 'MakeDecisionModal.benchBulkDecidedAuto',
+    defaultMessage: 'The analyzer decided that failure earlier on its own.',
+  },
+  benchBulkUnlabeled: {
+    id: 'MakeDecisionModal.benchBulkUnlabeled',
+    defaultMessage: 'A look-alike nobody labelled yet. Your call.',
+  },
+  benchBulkAiPct: {
+    id: 'MakeDecisionModal.benchBulkAiPct',
+    defaultMessage: '{pct}% guess. Not confirmed.',
+  },
+  benchBulkDeclined: {
+    id: 'MakeDecisionModal.benchBulkDeclined',
+    defaultMessage: 'Looked at and declined: {list}.',
+  },
+  benchBulkCmtFromOffer: {
+    id: 'MakeDecisionModal.benchBulkCmtFromOffer',
+    defaultMessage: "Filled from the matched test's saved comment. Change it if you want.",
   },
   benchBulkScopeAll: {
     id: 'MakeDecisionModal.benchBulkScopeAll',

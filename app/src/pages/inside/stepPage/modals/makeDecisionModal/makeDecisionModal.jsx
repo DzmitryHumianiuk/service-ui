@@ -728,6 +728,7 @@ const MakeDecision = ({ data }) => {
       {benchBulk ? (
         <BulkBench
           suggestedItems={modalState.suggestedItems}
+          mlResolved={mlResolved}
           modalState={modalState}
           setModalState={setModalState}
           onApply={applyChanges}
