@@ -57,7 +57,7 @@ import {
   SHOW_LOGS_BY_DEFAULT,
 } from './constants';
 import { ExecutionSection } from './executionSection';
-import { Bench } from './bench';
+import { Bench, BulkBench, distinctSavedTypeCount } from './bench';
 import {
   canLlmStillAnswer,
   getAnalyzerHealthApiUrl,
@@ -144,8 +144,13 @@ const MakeDecision = ({ data }) => {
   // nothing to say (e.g. a FAILED item with no ERROR logs, so no signature). We show
   // the light Bench silent-no-signal empty state instead of the stock dark tabs, so
   // the human still gets the light manual-triage surface. Analyzer-off / unreachable
-  // and bulk keep the stock dark tabs (benchEligible is false there).
+  // keeps the stock dark tabs (benchEligible is false there).
   const benchEmpty = benchEligible && mlResolved && modalState.suggestedItems.length === 0;
+  // A multi-select Edit Defects call gets its own light surface: one decision
+  // fanning out over the selection, manual-first, with the analyzer offer shown
+  // when the whole selection shares one cluster. Not gated on the analyzer: the
+  // bulk surface reads nothing per-item, so there is no state it cannot render.
+  const benchBulk = isBulkOperation;
   useEffect(() => {
     let hasChanges;
     const newIssueData = modalState[ACTIVE_TAB_MAP[modalState.decisionType]].issue;
@@ -650,6 +655,36 @@ const MakeDecision = ({ data }) => {
   // the SAVED issue type from RP entities. The stock branch keeps the plain
   // "Select defect" string.
   const getBenchHeaderTitle = () => {
+    if (isBulkOperation) {
+      const count = modalState.currentTestItems.length;
+      const typeCount = distinctSavedTypeCount(modalState.currentTestItems);
+      const sharedType =
+        typeCount === 1
+          ? getDefectType(
+              modalState.currentTestItems.find((i) => i.issue?.issueType).issue.issueType,
+            )
+          : null;
+      return (
+        <div className={cx('bench-identity')}>
+          <span className={cx('bi-cap')}>{formatMessage(messages.benchIdentityCap)}</span>
+          <span className={cx('bi-name')}>
+            {formatMessage(messages.benchBulkIdentityName, { count })}
+          </span>
+          {sharedType ? (
+            <span className={cx('bi-issue')}>
+              <span className={cx('bi-dot')} style={{ background: sharedType.color }} />
+              {sharedType.longName}
+            </span>
+          ) : (
+            typeCount > 1 && (
+              <span className={cx('bi-status')}>
+                {formatMessage(messages.benchBulkMixedTypes)}
+              </span>
+            )
+          )}
+        </div>
+      );
+    }
     const item = modalState.currentTestItems[0] || itemData;
     const savedType = item.issue?.issueType ? getDefectType(item.issue.issueType) : null;
     return (
@@ -669,7 +704,7 @@ const MakeDecision = ({ data }) => {
     );
   };
 
-  const benchChrome = benchActive || benchPending || benchEmpty;
+  const benchChrome = benchActive || benchPending || benchEmpty || benchBulk;
   return (
     <DarkModalLayout
       headerTitle={benchChrome ? getBenchHeaderTitle() : formatMessage(messages.selectDefect)}
@@ -690,7 +725,18 @@ const MakeDecision = ({ data }) => {
         )
       }
     >
-      {benchPending ? (
+      {benchBulk ? (
+        <BulkBench
+          suggestedItems={modalState.suggestedItems}
+          modalState={modalState}
+          setModalState={setModalState}
+          onApply={applyChanges}
+          onCancel={() => dispatch(hideModalAction())}
+          modalHasChanges={modalHasChanges}
+          scopeSection={executionSection(true)}
+          scopeRef={scopeRef}
+        />
+      ) : benchPending ? (
         <div className={cx('bench-pending')}>
           <SpinningPreloader />
         </div>

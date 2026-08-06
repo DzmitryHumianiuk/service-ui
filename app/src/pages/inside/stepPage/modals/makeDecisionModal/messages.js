@@ -1348,4 +1348,44 @@ export const messages = defineMessages({
     id: 'MakeDecisionModal.benchOverrideCommentReplace',
     defaultMessage: 'Your comment will replace theirs on the included tests.',
   },
+  // ---------------------------------------------------------------------------
+  // Bulk Bench: the light surface for a multi-select Edit Defects call. One
+  // decision fans out over every selected test; the per-item anatomy (journey,
+  // story, advisors) does not apply, so the surface is the selection, the
+  // analyzer offer for the shared failure group when there is one, and the
+  // manual verdict bar.
+  // ---------------------------------------------------------------------------
+  benchBulkIdentityName: {
+    id: 'MakeDecisionModal.benchBulkIdentityName',
+    defaultMessage: '{count, plural, one {# test selected} other {# tests selected}}',
+  },
+  benchBulkMixedTypes: {
+    id: 'MakeDecisionModal.benchBulkMixedTypes',
+    defaultMessage: 'Saved defect types differ',
+  },
+  benchBulkListCap: {
+    id: 'MakeDecisionModal.benchBulkListCap',
+    defaultMessage: 'Tests to change',
+  },
+  benchBulkOfferHead: {
+    id: 'MakeDecisionModal.benchBulkOfferHead',
+    defaultMessage: 'The analyzer offer for this failure group',
+  },
+  benchBulkOfferSub: {
+    id: 'MakeDecisionModal.benchBulkOfferSub',
+    defaultMessage: 'From earlier failures with similar logs. Click an offer to use its defect type.',
+  },
+  benchProvFromOffer: {
+    id: 'MakeDecisionModal.benchProvFromOffer',
+    defaultMessage: 'from the analyzer offer',
+  },
+  benchBulkScopeAll: {
+    id: 'MakeDecisionModal.benchBulkScopeAll',
+    defaultMessage:
+      '{count, plural, one {Applies to the # selected test.} other {Applies to all # selected tests.}}',
+  },
+  benchBulkRecap: {
+    id: 'MakeDecisionModal.benchBulkRecap',
+    defaultMessage: 'Will set {defect} on {count, plural, one {# test} other {# tests}}.',
+  },
 });

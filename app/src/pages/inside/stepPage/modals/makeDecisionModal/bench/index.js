@@ -15,3 +15,4 @@
  */
 
 export { Bench } from './bench';
+export { BulkBench, distinctSavedTypeCount } from './bulkBench';
