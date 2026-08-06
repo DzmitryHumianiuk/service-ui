@@ -44,6 +44,7 @@ import { DefectTypeItem } from 'pages/inside/common/defectTypeItem';
 import { MarkdownEditor } from 'components/main/markdown';
 import OpenInNewTabIcon from 'common/img/open-in-new-tab-inline.svg';
 import { COMMON_LOCALE_KEYS } from 'common/constants/localization';
+import { TO_INVESTIGATE_LOCATOR_PREFIX } from 'common/constants/defectTypes';
 import { messages } from '../messages';
 import {
   ADD_FOR_ALL,
@@ -191,9 +192,16 @@ export const BulkBench = ({
 
   const decision = journey?.decision || null;
   // The story line renders only for a real auto decision whose label resolves to
-  // a project defect type (ng40 lesson: resolve from the specific locator).
+  // a project defect type (ng40 lesson: resolve from the specific locator), AND
+  // only when the representative actually carries a non-TI saved type. A band=auto
+  // suggestion row for a still-To-Investigate item means the analyzer WOULD apply,
+  // not that it did; saying "already applied" there would be a lie, and the offer
+  // cards below already carry that answer.
+  const repApplied =
+    !!repItem?.issue?.issueType &&
+    !repItem.issue.issueType.startsWith(TO_INVESTIGATE_LOCATOR_PREFIX);
   const storyDefect =
-    decision && decision.band === 'auto' && decision.predicted_label
+    repApplied && decision && decision.band === 'auto' && decision.predicted_label
       ? getDefectType(decision.predicted_label)
       : null;
 

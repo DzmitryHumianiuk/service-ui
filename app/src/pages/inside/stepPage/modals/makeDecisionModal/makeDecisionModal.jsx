@@ -189,10 +189,14 @@ const MakeDecision = ({ data }) => {
     }
     let cancelled = false;
     const timers = [];
-    const url =
-      clusterIds.length === 1
-        ? URLS.MLSuggestionsByCluster(activeProject, clusterIds[0])
-        : URLS.MLSuggestions(activeProject, itemData.id);
+    // Always the per-item suggest, even when the selection is one Unique Errors
+    // cluster. The by-cluster endpoint is a dead letter against analyzer-ng: the
+    // service-api cluster variant sends clusterId + launch metadata and NO logs,
+    // and the analyzer builds the query signature from the request's own logs, so
+    // the reply was always empty (spec 3.4). A cluster IS the exact error-hash
+    // group, so the representative member's suggest is the group's suggest.
+    const repId = isBulkOperation ? data.items[0].id : itemData.id;
+    const url = URLS.MLSuggestions(activeProject, repId);
     // An empty reply does NOT mean the analyzer has nothing to say. It answers the
     // suggest call from what it has already worked out; for a failure it has not
     // seen before the answer is still being computed when the reply goes out, and
