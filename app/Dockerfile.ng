@@ -1,5 +1,5 @@
 # Thin overlay: analyzer-ng Make Decision suggestion-card patch on top of the
-# stock service-ui 5.15.3 image. The host-built `build/` dir is copied over the
-# nginx docroot; buildInfo.json is preserved from the base (footer stays 5.15.3).
-FROM reportportal/service-ui:5.15.3
+# stock service-ui 5.15.4 image. The host-built `build/` dir is copied over the
+# nginx docroot; buildInfo.json is preserved from the base (footer stays 5.15.4).
+FROM reportportal/service-ui:5.15.4
 COPY build/ /usr/share/nginx/html/
