@@ -89,7 +89,9 @@
   max-width: 1240px;
   min-height: 320px;
   margin: 0 auto 10px auto;
+  /* stylelint-disable-next-line color-no-hex -- RP DS6 token --rp-bg-000 (bench palette) */
   background: #ffffff;
+  /* stylelint-disable-next-line color-no-hex -- RP DS6 token --rp-e-100 (bench palette) */
   border: 1px solid #e3e7ec;
   border-radius: 16px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);

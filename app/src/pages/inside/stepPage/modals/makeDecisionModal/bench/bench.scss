@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/* stylelint-disable color-no-hex -- The RP Design System 6 token palette below
+   is quoted verbatim from the design source (mockup-bench-rp.html :root); hex
+   is the tokens' native format and every color in this file flows from them. */
+
 /*
  * The Bench — RP Design System 6 (light) re-skin of the Make Decision modal.
  * Tokens + values are quoted from docs/consilium-make-decision/mockup-bench-rp.html.
@@ -347,14 +351,14 @@
       font-size: 12.5px;
       color: var(--rp-almost-black);
       white-space: pre-wrap;
-      word-break: break-word;
+      overflow-wrap: anywhere;
     }
     .fp-sub {
       font-family: var(--rp-mono);
       font-size: 11.5px;
       color: var(--rp-e-400);
       margin-top: 2px;
-      word-break: break-word;
+      overflow-wrap: anywhere;
     }
     .fp-solo {
       margin-top: 4px;
@@ -393,7 +397,7 @@
         line-height: 18px;
         color: var(--rp-charcoal);
         white-space: pre-wrap;
-        word-break: break-word;
+        overflow-wrap: anywhere;
       }
       .logrow.star {
         color: var(--rp-yellow-700);
@@ -583,20 +587,6 @@
     .story-head .defect-pill.mini {
       transform: translateY(2px);
     }
-    .ai-body {
-      .rich-item {
-        color: var(--rp-topaz);
-        white-space: nowrap;
-      }
-      .rich-pill {
-        display: inline-flex;
-        vertical-align: baseline;
-
-        .defect-pill.mini {
-          transform: translateY(2px);
-        }
-      }
-    }
     // Provenance tag, reused by both the story caprow and the AI caprow.
     .src-tag {
       font-size: 10.5px;
@@ -731,6 +721,19 @@
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
+
+      .rich-item {
+        color: var(--rp-topaz);
+        white-space: nowrap;
+      }
+      .rich-pill {
+        display: inline-flex;
+        vertical-align: baseline;
+
+        .defect-pill.mini {
+          transform: translateY(2px);
+        }
+      }
     }
     .ai-more {
       background: none;
@@ -753,6 +756,8 @@
     padding: 16px 24px;
   }
   .region-head {
+    // Positioning context for the bulk story banner's corner Inspector link.
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -863,10 +868,6 @@
         box-shadow: 0 0 0 2px var(--rp-topaz-focused);
       }
     }
-    &.empty {
-      cursor: default;
-    }
-
     // Mockup parity: the compare-source card carries a topaz focus ring while
     // its compare view is open (mockup-bench-rp.html .check.focus).
     &.focus {
@@ -1020,6 +1021,7 @@
       }
     }
     &.empty {
+      cursor: default;
       opacity: 0.75;
       border-style: dashed;
       box-shadow: none;
@@ -1251,7 +1253,6 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
         overflow-wrap: anywhere;
-        word-break: break-word;
       }
       .dd {
         margin-top: 4px;
@@ -1349,7 +1350,7 @@
       line-height: 19px;
       color: var(--rp-charcoal);
       white-space: pre-wrap;
-      word-break: break-word;
+      overflow-wrap: anywhere;
 
       &.clamp {
         display: -webkit-box;
@@ -1534,7 +1535,7 @@
       padding: 1px 4px;
       border-radius: 2px;
       white-space: pre-wrap;
-      word-break: break-word;
+      overflow-wrap: anywhere;
       position: relative;
 
       &.same {
@@ -2197,33 +2198,10 @@
       color: var(--rp-charcoal);
     }
   }
-}
 
-@keyframes benchScopePulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 176, 209, 0.55);
-  }
-  60% {
-    box-shadow: 0 0 0 6px rgba(0, 176, 209, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 176, 209, 0);
-  }
-}
-
-@keyframes benchLinePulse {
-  0% {
-    background: rgba(0, 176, 209, 0.3);
-  }
-  100% {
-    background: transparent;
-  }
-}
-
-// ---- bulk Bench: the light surface for a multi-select Edit Defects call ----
-// Same tokens, same bands; the per-item anatomy is replaced by the selection
-// list and (single-cluster selections only) the analyzer offer rows.
-.bench-modal {
+  // ---- bulk Bench: the light surface for a multi-select Edit Defects call ----
+  // Same tokens, same bands; the per-item anatomy is replaced by the selection
+  // list and (single-cluster selections only) the analyzer offer rows.
   .bulk-list {
     .bl-cap {
       font-size: 10px;
@@ -2288,12 +2266,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-  }
-
-  // The bulk story banner carries an absolutely-positioned corner link; the
-  // head must be its positioning context or the link escapes to the modal edge.
-  .region-head {
-    position: relative;
   }
 
   .bl-group-line {
@@ -2396,3 +2368,25 @@
     }
   }
 }
+
+@keyframes benchScopePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 176, 209, 0.55);
+  }
+  60% {
+    box-shadow: 0 0 0 6px rgba(0, 176, 209, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 176, 209, 0);
+  }
+}
+
+@keyframes benchLinePulse {
+  0% {
+    background: rgba(0, 176, 209, 0.3);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
