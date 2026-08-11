@@ -575,6 +575,10 @@ export const Bench = ({
   // keeps focus, and the first Enter flips Chrome into keyboard mode, painting
   // a focus ring on that stale card next to the armed ring on another.
   const cardRefs = useRef({});
+  // Counts apply ATTEMPTS made while there is nothing to apply (the armed
+  // verdict equals the saved one). Each attempt re-keys the recap line so its
+  // fading highlight restarts: the answer to the press is the line lighting up.
+  const [savedPulse, setSavedPulse] = useState(0);
   const keyCtx = useRef({});
   useEffect(() => {
     keyCtx.current = {
@@ -586,6 +590,9 @@ export const Bench = ({
       modalHasChanges,
       onApply,
       enterLeanRow,
+      alreadySaved:
+        !!(verdictProv && verdictProv.chosen && currentIssue.issueType) && !modalHasChanges,
+      pulseSaved: () => setSavedPulse((n) => n + 1),
       armViaEnter: (row) => {
         keyupSinceArm.current = false;
         adoptClassical(row);
@@ -653,6 +660,9 @@ export const Bench = ({
         if (c.modalHasChanges && keyupSinceArm.current) {
           e.preventDefault();
           c.onApply();
+        } else if (c.alreadySaved && keyupSinceArm.current) {
+          e.preventDefault();
+          c.pulseSaved();
         }
         return;
       }
@@ -669,6 +679,14 @@ export const Bench = ({
           e.preventDefault();
           c.onApply();
         }
+        return;
+      }
+      if (c.alreadySaved && keyupSinceArm.current) {
+        // The apply step of the two-step Enter, with nothing to apply: the
+        // recap line already says why, this press makes it light up briefly so
+        // the answer is visibly tied to the key.
+        e.preventDefault();
+        c.pulseSaved();
         return;
       }
       if (c.enterLeanRow) {
@@ -2083,6 +2101,7 @@ export const Bench = ({
     // This is verdict 6.4's deferred "already saved" no-op case, now spoken.
     recap = {
       warn: false,
+      saved: true,
       text: formatMessage(messages.benchRecapAlreadySaved, {
         type: defectName(currentIssue.issueType),
       }),
@@ -2884,20 +2903,37 @@ export const Bench = ({
             <button type="button" className={cx('btn', 'btn-ghost')} onClick={onCancel}>
               {formatMessage(COMMON_LOCALE_KEYS.CANCEL)}
             </button>
-            <button
-              type="button"
-              className={cx('btn', 'btn-teal')}
-              disabled={!modalHasChanges}
-              onClick={onApply}
+            <span
+              className={cx('apply-wrap')}
+              onClick={() => {
+                if (!modalHasChanges && recap && recap.saved) {
+                  setSavedPulse((n) => n + 1);
+                }
+              }}
             >
-              {formatMessage(
-                modalState.issueActionType ? messages.applyAndContinue : messages.apply,
-              )}
-            </button>
+              <button
+                type="button"
+                className={cx('btn', 'btn-teal')}
+                disabled={!modalHasChanges}
+                onClick={onApply}
+              >
+                {formatMessage(
+                  modalState.issueActionType ? messages.applyAndContinue : messages.apply,
+                )}
+              </button>
+            </span>
           </div>
         </div>
         {recap && (
-          <div className={cx('vb-recap', { warn: recap.warn, strong: recap.strong })}>
+          <div
+            key={recap.saved ? `saved-${savedPulse}` : 'recap'}
+            className={cx('vb-recap', {
+              warn: recap.warn,
+              strong: recap.strong,
+              saved: recap.saved,
+              pulse: recap.saved && savedPulse > 0,
+            })}
+          >
             {recap.text}
           </div>
         )}

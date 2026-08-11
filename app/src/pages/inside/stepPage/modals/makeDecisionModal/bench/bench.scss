@@ -2113,6 +2113,16 @@
         font-size: 12px;
       }
     }
+    .apply-wrap {
+      display: inline-flex;
+
+      // A disabled button swallows the click; letting it pass through to the
+      // wrapper is what turns a dead press into the recap flash.
+      .btn:disabled {
+        pointer-events: none;
+      }
+    }
+
     .commit-actions {
       display: flex;
       align-items: center;
@@ -2152,6 +2162,33 @@
       &.strong {
         color: #b34700;
         font-weight: 600;
+      }
+      // The already-saved no-op line sits under the Apply corner it answers
+      // for, and an apply attempt with nothing to apply relights it once: the
+      // fading highlight ties the press to the explanation. No loop; one beat
+      // per attempt, and none at all for reduced motion.
+      &.saved {
+        text-align: right;
+        border-radius: 6px;
+        padding: 3px 8px;
+        margin-right: -8px;
+      }
+      &.saved.pulse {
+        animation: bench-saved-flash 900ms ease-out 1;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        &.saved.pulse {
+          animation: none;
+        }
+      }
+    }
+
+    @keyframes bench-saved-flash {
+      0% {
+        background: var(--rp-topaz-100);
+      }
+      100% {
+        background: transparent;
       }
     }
     // the footer InfoBlock re-parented as the recap's expandable detail
