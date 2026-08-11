@@ -570,6 +570,11 @@ export const Bench = ({
   // single gesture (risk R2): the arming press sets it false, the next keyup
   // restores it, and only then can the apply step run.
   const keyupSinceArm = useRef(true);
+  // DOM nodes of the two classical cards, so an Enter-arm can move the browser
+  // focus onto the card it armed. Without this the card the user last CLICKED
+  // keeps focus, and the first Enter flips Chrome into keyboard mode, painting
+  // a focus ring on that stale card next to the armed ring on another.
+  const cardRefs = useRef({});
   const keyCtx = useRef({});
   useEffect(() => {
     keyCtx.current = {
@@ -584,6 +589,12 @@ export const Bench = ({
       armViaEnter: (row) => {
         keyupSinceArm.current = false;
         adoptClassical(row);
+        // Focus follows arming: the ring and the focus outline land on the
+        // same card, and the card clicked earlier drops its stale outline.
+        const node = cardRefs.current[row.band === BANDS.AUTO ? 'past' : 'similar'];
+        if (node) {
+          node.focus({ preventScroll: true });
+        }
       },
       closeCompare,
       closePicker: () => setPickerOpen(false),
@@ -1401,6 +1412,9 @@ export const Bench = ({
               focus: compare && compare === precedentRow,
               armed: armedCard === 'past',
             })}
+            ref={(node) => {
+              cardRefs.current.past = node;
+            }}
             role="button"
             tabIndex={0}
             onClick={armOnCardClick(() => adoptClassical(precedentRow))}
@@ -1455,6 +1469,9 @@ export const Bench = ({
               armed: armedCard === 'similar',
               'armed-unbacked': armedCard === 'similar' && similarUnbacked,
             })}
+            ref={(node) => {
+              cardRefs.current.similar = node;
+            }}
             role="button"
             tabIndex={0}
             onClick={armOnCardClick(() => adoptClassical(topSuggest))}
@@ -2057,6 +2074,19 @@ export const Bench = ({
       warn = Math.max(warn, 1);
     }
     recap = { warn: warn > 0, strong: warn >= 2, text: frags.join(' ') };
+  } else if (verdictProv && verdictProv.chosen && currentIssue.issueType) {
+    // The armed verdict is identical to what the item already carries (same
+    // type, same comment, no group scope, no issue action), so the commit gate
+    // honestly disables Apply. Without this line the gate reads as a broken
+    // Enter key: on an early-decided item the Past decision card offers exactly
+    // what the early pass already applied, and both Enter steps end in silence.
+    // This is verdict 6.4's deferred "already saved" no-op case, now spoken.
+    recap = {
+      warn: false,
+      text: formatMessage(messages.benchRecapAlreadySaved, {
+        type: defectName(currentIssue.issueType),
+      }),
+    };
   }
 
   const toggleTi = () => setTiOn((v) => !v);

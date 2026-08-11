@@ -1206,6 +1206,10 @@ export const messages = defineMessages({
     defaultMessage: 'comment kept from your edit',
   },
   // Recap
+  benchRecapAlreadySaved: {
+    id: 'MakeDecisionModal.benchRecapAlreadySaved',
+    defaultMessage: '{type} is already saved on this test. Nothing to apply.',
+  },
   benchRecapThisItem: {
     id: 'MakeDecisionModal.benchRecapThisItem',
     defaultMessage: 'This will be applied to this item.',

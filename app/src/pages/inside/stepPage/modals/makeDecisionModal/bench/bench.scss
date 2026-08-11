@@ -862,10 +862,14 @@
         border-color: var(--rp-e-300);
         box-shadow: var(--rp-shadow-hover, 0 1px 3px rgba(9, 30, 66, 0.2));
       }
+      // Keyboard focus must read as focus, not as a made choice: the armed
+      // ring is a solid topaz halo, so the focus indicator is a thin dashed
+      // outline held off the card edge. Before this they were identical, and a
+      // card that kept browser focus after a click wore a second "armed" ring
+      // the moment Enter flipped Chrome into keyboard mode.
       &:focus-visible {
-        outline: none;
-        border-color: var(--rp-topaz);
-        box-shadow: 0 0 0 2px var(--rp-topaz-focused);
+        outline: 2px dashed var(--rp-topaz);
+        outline-offset: 3px;
       }
     }
     // Mockup parity: the compare-source card carries a topaz focus ring while
